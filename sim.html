@@ -680,8 +680,6 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light;
   async function runSim(replay) {
     isRunning = true;
     playBtn.disabled = true;
-    const _counter = document.getElementById('sim-counter');
-    if (_counter && currentSimIdx !== null) _counter.textContent = 'SIM ' + (currentSimIdx + 1).toLocaleString() + ' / ' + SIMS_DATA.sims.length.toLocaleString();
     replayBtn.disabled = true;
     showTrack();
     updatePaceBadge(null);
@@ -697,8 +695,10 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light;
       fourthFinishTime = lastSimState.fourthFinishTime;
       lockedCalls = lastSimState.lockedCalls;
     } else {
-      // v3.2: Pick a random sim from the 10K precomputed database
+      // v3.4: Pick a random sim from the 10K database, update counter IMMEDIATELY
       currentSimIdx = Math.floor(Math.random() * SIMS_DATA.sims.length);
+      const _ctr = document.getElementById('sim-counter');
+      if (_ctr) _ctr.textContent = 'SIM ' + (currentSimIdx + 1).toLocaleString() + ' / ' + SIMS_DATA.sims.length.toLocaleString();
       const lockedFinish = SIMS_DATA.sims[currentSimIdx];
       paceShape = samplePaceShape();
       sorted = lockedFinish.map((post, rank) => {
