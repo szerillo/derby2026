@@ -3,34 +3,813 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Race Simulator — Coming Soon</title>
+<meta name="color-scheme" content="light only" />
+<title>152nd Kentucky Derby — Race Simulator</title>
 <style>
-body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-  background: #faf8f3;
-  color: #1a1a1a;
+:root {
+  color-scheme: light only;
+  --bg: #ffffff;
+  --bg-muted: #f6f4f0;
+  --text: #1a1a1a;
+  --text-muted: #6b6b6b;
+  --border: #e5e1d8;
+  --accent: #8a1538;
+  --accent-dark: #5a0d24;
+  --gold: #c8a951;
+  --pos: #1d8348;
+  --neg: #b03030;
+  --turf: #6c8b4a;
+  --rail: #ffffff;
+  --dirt: #c9a04e;
+  --dirt-dark: #8a6f2f;
+}
+html, body {
+  background: #ffffff;
   margin: 0;
-  padding: 60px 20px;
+  padding: 0;
+  color-scheme: light;
+}
+.sim-widget {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0;
+  font-size: 14px;
+  line-height: 1.4;
+  box-sizing: border-box;
+}
+.sim-widget *, .sim-widget *::before, .sim-widget *::after { box-sizing: border-box; }
+
+/* Header */
+.sim-header {
+  position: relative;
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+  color: #fff;
+  padding: 16px 18px;
+  border-radius: 8px 8px 0 0;
   text-align: center;
 }
-.card {
-  max-width: 480px;
-  margin: 0 auto;
-  background: #fff;
-  border: 1px solid #e5e1d8;
-  border-radius: 8px;
-  padding: 30px;
+.sim-title { font-size: 20px; font-weight: 700; margin: 0 0 2px; }
+.sim-subtitle { font-size: 12px; opacity: 0.85; margin: 0; }
+.sim-byline-header { font-size: 11px; margin-top: 4px; opacity: 0.9; }
+.sim-byline-header a { color: #fff; text-decoration: none; font-weight: 600; border-bottom: 1px dotted rgba(255,255,255,0.5); }
+.sim-brand { position: absolute; top: 12px; right: 14px; display: inline-flex; align-items: center; gap: 5px; }
+.sim-brand-text { font-weight: 900; font-size: 14px; letter-spacing: -0.3px; color: #fff; }
+.sim-brand-check { width: 16px; height: 16px; border-radius: 50%; background: #11c75c; display: inline-flex; align-items: center; justify-content: center; }
+.sim-brand-check svg { width: 10px; height: 10px; }
+
+/* Controls bar */
+.sim-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
 }
-h1 { color: #8a1538; margin-bottom: 8px; font-size: 22px; }
-p { color: #6b6b6b; line-height: 1.5; }
-a { color: #8a1538; text-decoration: none; font-weight: 600; }
+.sim-btn {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 9px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.sim-btn:disabled { background: #b8b8b8; cursor: not-allowed; }
+.sim-btn:hover:not(:disabled) { background: var(--accent-dark); }
+.sim-btn.secondary { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
+.sim-btn.secondary:hover:not(:disabled) { background: var(--bg-muted); }
+.sim-btn .icon { font-size: 14px; }
+.pace-pill {
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 5px 11px;
+  border-radius: 999px;
+  background: var(--bg-muted);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+.pace-pill.fast { background: #ffe4d6; color: #b14d20; border-color: #f0b89a; }
+.pace-pill.honest { background: #fff3c0; color: #855a00; border-color: #f0d878; }
+.pace-pill.slow { background: #d6e9d6; color: #2e6b2e; border-color: #a3cba3; }
+.sim-counter {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+/* Leaderboard */
+.leaderboard {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 6px;
+  padding: 8px 14px;
+  background: var(--bg-muted);
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  min-height: 38px;
+}
+.lb-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 7px 3px 3px;
+  background: #fff;
+  border-radius: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  flex-shrink: 0;
+  border: 1px solid var(--border);
+  white-space: nowrap;
+}
+.lb-saddle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px; height: 22px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+.lb-name { font-size: 12px; color: var(--text); }
+.leaderboard.hidden { display: none; }
+
+/* Track */
+.track-wrap {
+  position: relative;
+  background: linear-gradient(180deg, #74a843 0%, #4d7a2c 100%);
+  padding: 14px 12px;
+  border-bottom: 1px solid var(--border);
+  overflow: hidden;
+}
+.track-wrap.hidden { display: none; }
+.track-svg {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+}
+.horse { transition: none; }
+.horse circle { stroke: rgba(0,0,0,0.25); stroke-width: 1.5; }
+.horse text { font-family: -apple-system, sans-serif; font-weight: 800; pointer-events: none; }
+.gate-line { stroke: #ffffff; stroke-width: 2; stroke-dasharray: 4,3; opacity: 0.7; }
+.finish-line { stroke: #fff; stroke-width: 4; }
+.finish-checker { fill: url(#checker); }
+.pole-marker text { font-size: 10px; fill: #fff; font-weight: 700; }
+.pole-marker line { stroke: #fff; stroke-width: 1; opacity: 0.7; }
+
+/* Race call */
+.race-call {
+  padding: 14px 18px;
+  font-size: 14px;
+  line-height: 1.5;
+  min-height: 60px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  font-style: italic;
+  color: var(--text);
+}
+.race-call.empty { color: var(--text-muted); font-style: normal; }
+
+/* Toteboard */
+.toteboard {
+  padding: 18px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+.toteboard.hidden { display: none; }
+.tote-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0 0 4px;
+  color: var(--accent);
+}
+.tote-note {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 14px;
+  background: var(--bg-muted);
+  padding: 8px 10px;
+  border-radius: 5px;
+  border-left: 3px solid var(--gold);
+}
+.tote-section { margin-bottom: 14px; }
+.tote-section h3 {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  margin: 0 0 6px;
+  font-weight: 700;
+}
+.tote-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.tote-table th, .tote-table td { padding: 6px 8px; text-align: left; border-bottom: 1px solid var(--border); }
+.tote-table th { background: var(--bg-muted); font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); }
+.tote-table td.num { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
+.tote-table .saddle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px; height: 22px;
+  border-radius: 4px;
+  font-size: 11px; font-weight: 800;
+}
+.exotics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.exotic-card {
+  background: var(--bg-muted);
+  border-radius: 6px;
+  padding: 10px;
+  text-align: center;
+}
+.exotic-card .exotic-name { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); font-weight: 700; }
+.exotic-card .exotic-amt { font-size: 18px; font-weight: 700; color: var(--accent); margin-top: 2px; }
+.exotic-card .exotic-combo { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+
+/* Transcript */
+.transcript {
+  padding: 12px 18px;
+  background: var(--bg-muted);
+  font-size: 12px;
+  border-radius: 0 0 8px 8px;
+}
+.transcript summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--text);
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  user-select: none;
+}
+.transcript summary::-webkit-details-marker { display: none; }
+.transcript summary::before { content: "▸"; transition: transform 0.15s; display: inline-block; font-size: 10px; }
+.transcript[open] summary::before { transform: rotate(90deg); }
+.transcript-list {
+  margin: 8px 0 0;
+  padding: 0 0 0 16px;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+.transcript-list li { list-style: none; position: relative; padding-left: 4px; margin-bottom: 2px; }
+.transcript-list .ts { font-variant-numeric: tabular-nums; color: var(--text); font-weight: 600; margin-right: 6px; font-size: 11px; }
+
+/* Mobile breakpoints */
+@media (max-width: 600px) {
+  .sim-title { font-size: 17px; }
+  .sim-controls { padding: 10px; gap: 6px; }
+  .sim-btn { padding: 9px 12px; font-size: 12px; }
+  .pace-pill { font-size: 11px; padding: 4px 9px; margin-left: 0; flex-basis: 100%; text-align: center; }
+  .sim-counter { flex-basis: 100%; text-align: center; order: -1; margin-bottom: 2px; }
+  .leaderboard { padding: 8px 10px; }
+  .race-call { padding: 12px 14px; font-size: 13px; }
+  .toteboard { padding: 14px; }
+  .tote-title { font-size: 16px; }
+  .exotics { grid-template-columns: 1fr; }
+  .tote-table { font-size: 12px; }
+  .tote-table th, .tote-table td { padding: 5px 6px; }
+}
+@media (max-width: 380px) {
+  .sim-title { font-size: 15px; }
+  .sim-subtitle { font-size: 11px; }
+  .sim-brand { position: static; justify-content: center; margin-bottom: 6px; }
+}
 </style>
 </head>
 <body>
-<div class="card">
-  <h1>Race Simulator</h1>
-  <p>Coming soon: animated race with broadcast call, photo finish, toteboard, and replay.</p>
-  <p>For now, see the <a href="table.html">data table widget</a> for the full model probabilities.</p>
+<div class="sim-widget" id="sim-widget">
+  <div class="sim-header">
+    <div class="sim-brand">
+      <span class="sim-brand-text">ACTION</span>
+      <span class="sim-brand-check"><svg viewBox="0 0 14 14" xmlns="http://www.w3.org/2000/svg"><path d="M3 7.2 L6 10 L11 4" stroke="#fff" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </div>
+    <div class="sim-title">152nd Kentucky Derby — Race Simulator</div>
+    <div class="sim-subtitle">1 1/4 miles · Churchill Downs</div>
+    <div class="sim-byline-header">By <a href="https://twitter.com/SeanZerillo" target="_blank" rel="noopener">@SeanZerillo</a></div>
+  </div>
+
+  <div class="sim-controls">
+    <button class="sim-btn" id="play-btn" disabled>
+      <span class="icon">▶</span><span id="play-label">Loading sims…</span>
+    </button>
+    <button class="sim-btn secondary" id="skip-btn" hidden>Skip</button>
+    <button class="sim-btn secondary" id="replay-btn" hidden>Replay</button>
+    <button class="sim-btn secondary" id="newsim-btn" hidden>New Sim</button>
+    <span class="pace-pill" id="pace-pill" hidden></span>
+    <span class="sim-counter" id="sim-counter"></span>
+  </div>
+
+  <div class="leaderboard hidden" id="leaderboard"></div>
+
+  <div class="track-wrap" id="track-wrap">
+    <svg class="track-svg" id="track" viewBox="0 0 1100 400" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <pattern id="checker" x="0" y="0" width="8" height="8" patternUnits="userSpaceOnUse">
+          <rect x="0" y="0" width="4" height="4" fill="#fff"/>
+          <rect x="4" y="4" width="4" height="4" fill="#fff"/>
+          <rect x="4" y="0" width="4" height="4" fill="#1a1a1a"/>
+          <rect x="0" y="4" width="4" height="4" fill="#1a1a1a"/>
+        </pattern>
+      </defs>
+
+      <!-- Outer track (dirt) -->
+      <path d="M 200,40 H 900 A 180,180 0 0 1 900,400 H 200 A 180,180 0 0 1 200,40 Z"
+            fill="#c9a04e" stroke="#8a7140" stroke-width="2"/>
+      <!-- Inner rail (turf infield) -->
+      <path d="M 215,90 H 885 A 130,130 0 0 1 885,350 H 215 A 130,130 0 0 1 215,90 Z"
+            fill="#5e8838" stroke="#fff" stroke-width="3"/>
+
+      <!-- Pole markers -->
+      <g class="pole-marker">
+        <!-- Wire / finish line -->
+        <line x1="600" y1="370" x2="600" y2="395" />
+        <text x="600" y="385" text-anchor="middle" dominant-baseline="middle" style="font-size: 11px; fill: #fff;">WIRE</text>
+        <!-- 1/8 -->
+        <line x1="450" y1="370" x2="450" y2="392" />
+        <text x="450" y="386" text-anchor="middle" style="font-size:9px;">⅛</text>
+        <!-- 1/4 (top of stretch) -->
+        <line x1="220" y1="370" x2="220" y2="392" />
+        <text x="240" y="386" text-anchor="middle" style="font-size:9px;">¼</text>
+        <!-- 1/2 (backstretch) -->
+        <line x1="550" y1="60" x2="550" y2="40" />
+        <text x="550" y="32" text-anchor="middle" style="font-size:9px; fill:#fff;">½</text>
+      </g>
+
+      <!-- Race path: counter-clockwise loop, ending past the wire at finish position -->
+      <!-- Start: chute right (x=1080, y=380), goes left through stretch FIRST TIME, then around the oval, and finishes at the wire (x=600, y=380) -->
+      <!-- For simplicity we model it as: start right of stretch chute, go up around CCW, finish at wire -->
+      <path id="race-path"
+            d="M 1080 380 L 950 380 A 150 150 0 0 1 800 230 A 150 150 0 0 1 950 80 H 230 A 150 150 0 0 1 80 230 A 150 150 0 0 1 230 380 H 600"
+            fill="none" stroke="#fff" stroke-width="0" stroke-dasharray="3,4" opacity="0"/>
+
+      <!-- Finish line (checkered) -->
+      <rect x="596" y="365" width="8" height="20" class="finish-checker"/>
+
+      <!-- Gate (start) -->
+      <line x1="1075" y1="365" x2="1075" y2="395" class="gate-line"/>
+      <text x="1075" y="408" text-anchor="middle" style="font-size: 9px; font-weight: 700; fill: #fff;">START</text>
+
+      <!-- Horses populated by JS -->
+      <g id="horses"></g>
+    </svg>
+  </div>
+
+  <div class="race-call empty" id="race-call">Press Play Sim to run a single Monte Carlo simulation of the 152nd Kentucky Derby.</div>
+
+  <div class="toteboard hidden" id="toteboard"></div>
+
+  <details class="transcript hidden" id="transcript">
+    <summary>Race call transcript</summary>
+    <ul class="transcript-list" id="transcript-list"></ul>
+  </details>
 </div>
+
+<script>
+(function() {
+  // -------- Roster (inlined) and runtime data --------
+  const ROSTER = [{"post":1,"name":"Renegade","ml":"4-1","ml_dec":4,"tw":"#E11A1A","nm":"#FFFFFF","style":"S","style_label":"Closer"},{"post":2,"name":"Albus","ml":"30-1","ml_dec":30,"tw":"#FFFFFF","nm":"#000000","style":"EP","style_label":"Tactical"},{"post":3,"name":"Intrepido","ml":"50-1","ml_dec":50,"tw":"#1B4FB0","nm":"#FFFFFF","style":"P","style_label":"Presser"},{"post":4,"name":"Litmus Test","ml":"50-1","ml_dec":50,"tw":"#F4DA15","nm":"#000000","style":"E","style_label":"Pace"},{"post":5,"name":"Right to Party","ml":"30-1","ml_dec":30,"tw":"#1F8A3A","nm":"#FFFFFF","style":"S","style_label":"Closer"},{"post":6,"name":"Commandment","ml":"6-1","ml_dec":6,"tw":"#000000","nm":"#FFD400","style":"P","style_label":"Presser"},{"post":7,"name":"Danon Bourbon","ml":"20-1","ml_dec":20,"tw":"#F26B1F","nm":"#000000","style":"P","style_label":"Presser"},{"post":8,"name":"So Happy","ml":"15-1","ml_dec":15,"tw":"#FFADC8","nm":"#000000","style":"EP","style_label":"Tactical"},{"post":9,"name":"The Puma","ml":"10-1","ml_dec":10,"tw":"#1FD9E8","nm":"#000000","style":"P","style_label":"Presser"},{"post":10,"name":"Wonder Dean","ml":"30-1","ml_dec":30,"tw":"#7B1FA2","nm":"#FFFFFF","style":"P","style_label":"Presser"},{"post":11,"name":"Incredibolt","ml":"20-1","ml_dec":20,"tw":"#9E9E9E","nm":"#E11A1A","style":"P","style_label":"Presser"},{"post":12,"name":"Chief Wallabee","ml":"8-1","ml_dec":8,"tw":"#B6E04C","nm":"#000000","style":"P","style_label":"Presser"},{"post":13,"name":"Silent Tactic","ml":"20-1","ml_dec":20,"tw":"#4A2C1A","nm":"#FFFFFF","style":"S","style_label":"Closer"},{"post":14,"name":"Potente","ml":"20-1","ml_dec":20,"tw":"#6F1010","nm":"#FFD400","style":"EP","style_label":"Tactical"},{"post":15,"name":"Emerging Market","ml":"15-1","ml_dec":15,"tw":"#C9B98A","nm":"#000000","style":"P","style_label":"Presser"},{"post":16,"name":"Pavlovian","ml":"30-1","ml_dec":30,"tw":"#6FA8DC","nm":"#F26B1F","style":"EP","style_label":"Tactical"},{"post":17,"name":"Six Speed","ml":"50-1","ml_dec":50,"tw":"#0B1F4D","nm":"#FFFFFF","style":"E","style_label":"Pace"},{"post":18,"name":"Further Ado","ml":"6-1","ml_dec":6,"tw":"#0E3F1A","nm":"#FFD400","style":"EP","style_label":"Tactical"},{"post":19,"name":"Golden Tempo","ml":"30-1","ml_dec":30,"tw":"#6F8FAF","nm":"#E11A1A","style":"S","style_label":"Closer"},{"post":20,"name":"Fulleffort","ml":"20-1","ml_dec":20,"tw":"#E91E8C","nm":"#FFD400","style":"S","style_label":"Closer"}];
+  const POST_TO_HORSE = {};
+  ROSTER.forEach(h => { POST_TO_HORSE[h.post] = h; });
+
+  let SIMS_DATA = null;          // loaded from data/derby_sims.json on first play
+  let lockedFinish = null;       // current sim finish order (array of posts, length 20)
+  let lockedShape = null;        // 'fast' | 'honest' | 'slow'
+  let lockedCalls = [];          // [{ time, text } ...]
+  let simIndex = null;           // index into SIMS_DATA.sims
+  let rafHandle = null;
+  let frozen = false;
+  let raceState = 'idle';        // 'idle' | 'racing' | 'finished'
+
+  // -------- DOM --------
+  const playBtn = document.getElementById('play-btn');
+  const playLabel = document.getElementById('play-label');
+  const skipBtn = document.getElementById('skip-btn');
+  const replayBtn = document.getElementById('replay-btn');
+  const newSimBtn = document.getElementById('newsim-btn');
+  const pacePill = document.getElementById('pace-pill');
+  const simCounter = document.getElementById('sim-counter');
+  const leaderboard = document.getElementById('leaderboard');
+  const trackWrap = document.getElementById('track-wrap');
+  const racePath = document.getElementById('race-path');
+  const horsesGroup = document.getElementById('horses');
+  const raceCallEl = document.getElementById('race-call');
+  const toteboard = document.getElementById('toteboard');
+  const transcript = document.getElementById('transcript');
+  const transcriptList = document.getElementById('transcript-list');
+
+  // -------- Sim duration --------
+  const RACE_DURATION_MS = 22000;
+
+  // -------- Phase markers (% of race) --------
+  const PHASES = [
+    { at: 0.00, key: 'break' },
+    { at: 0.16, key: 'first_quarter' },
+    { at: 0.40, key: 'backstretch' },
+    { at: 0.62, key: 'far_turn' },
+    { at: 0.80, key: 'top_stretch' },
+    { at: 0.93, key: 'drive' },
+    { at: 1.00, key: 'wire' }
+  ];
+
+  // -------- Init horses on track --------
+  function initHorses() {
+    horsesGroup.innerHTML = '';
+    const pathLen = racePath.getTotalLength();
+    const startPt = racePath.getPointAtLength(0);
+    ROSTER.forEach((h, i) => {
+      const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      g.classList.add('horse');
+      g.setAttribute('id', 'horse-' + h.post);
+      // small lateral offset so they don't all stack on top of each other at gate
+      const yOffset = (h.post - 10.5) * 1.4;
+      g.setAttribute('transform', `translate(${startPt.x}, ${startPt.y + yOffset})`);
+      const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      c.setAttribute('r', '11');
+      c.setAttribute('fill', h.tw);
+      g.appendChild(c);
+      const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      t.setAttribute('x', 0);
+      t.setAttribute('y', 0);
+      t.setAttribute('text-anchor', 'middle');
+      t.setAttribute('dominant-baseline', 'central');
+      t.setAttribute('fill', h.nm);
+      t.setAttribute('style', 'font-size: 12px;');
+      t.textContent = h.post;
+      g.appendChild(t);
+      horsesGroup.appendChild(g);
+    });
+  }
+
+  // -------- Pace shape sample (75/22/3) --------
+  function samplePaceShape() {
+    const r = Math.random();
+    if (r < 0.75) return 'fast';
+    if (r < 0.97) return 'honest';
+    return 'slow';
+  }
+
+  // -------- Style-aware progress curve --------
+  // Each horse's normalized progress along the path at time t (0..1)
+  function progressFor(horse, t, finishRank, shape) {
+    // Base progress: nonlinear so middle of race is "denser"
+    const base = t;
+    // Style: E/EP go early, S/DS come late
+    const style = horse.style;
+    let earlyBias = 0;
+    if (style === 'E') earlyBias = 0.06;
+    else if (style === 'EP') earlyBias = 0.04;
+    else if (style === 'P') earlyBias = 0.0;
+    else if (style === 'S') earlyBias = -0.04;
+    else if (style === 'DS') earlyBias = -0.06;
+    // Pace shape further amplifies/dampens (fast pace = closers come from further back)
+    if (shape === 'fast' && (style === 'S' || style === 'DS')) earlyBias -= 0.02;
+    if (shape === 'slow' && (style === 'E' || style === 'EP')) earlyBias += 0.02;
+
+    // Style bias affects EARLY portion of race (0 - 0.6); fades by 0.85
+    const biasShape = (t < 0.6) ? Math.sin(t / 0.6 * Math.PI) : Math.max(0, 1 - (t - 0.6) / 0.25);
+    const styleAdj = earlyBias * biasShape;
+
+    // Finish-rank adjustment: ensures correct order at t = 1
+    // Winner is at progress=1 at t=1; later finishers slightly behind
+    const finishMargin = finishRank * 0.0035; // ~0.35% per length back
+    const finishAdj = -finishMargin * Math.pow(t, 3);
+
+    return Math.max(0, Math.min(1, base + styleAdj + finishAdj));
+  }
+
+  // -------- Update horse positions during animation --------
+  function renderFrame(t) {
+    if (frozen) return;
+    const pathLen = racePath.getTotalLength();
+    // Compute (post -> progress) for this frame
+    const progressByPost = {};
+    lockedFinish.forEach((post, finishIdx) => {
+      const horse = POST_TO_HORSE[post];
+      const finishRank = finishIdx; // 0 = winner, 1 = 2nd, etc.
+      progressByPost[post] = progressFor(horse, t, finishRank, lockedShape);
+    });
+    // Update SVG positions
+    ROSTER.forEach(h => {
+      const p = progressByPost[h.post];
+      const pt = racePath.getPointAtLength(p * pathLen);
+      // perpendicular offset based on post (slight spread of "lanes")
+      const lane = (h.post - 10.5) * 1.4;
+      // Normal vector approximation (sample 1 unit ahead, get tangent perpendicular)
+      const ptAhead = racePath.getPointAtLength(Math.min(p * pathLen + 1, pathLen));
+      const dx = ptAhead.x - pt.x, dy = ptAhead.y - pt.y;
+      const mag = Math.sqrt(dx*dx + dy*dy) || 1;
+      const nx = -dy / mag, ny = dx / mag;
+      const x = pt.x + nx * lane;
+      const y = pt.y + ny * lane;
+      const horseEl = document.getElementById('horse-' + h.post);
+      if (horseEl) horseEl.setAttribute('transform', `translate(${x}, ${y})`);
+    });
+    // Update leaderboard: sort horses by current progress descending
+    const sorted = ROSTER.slice().sort((a, b) => progressByPost[b.post] - progressByPost[a.post]);
+    renderLeaderboard(sorted.slice(0, 8));
+  }
+
+  function renderLeaderboard(top) {
+    leaderboard.innerHTML = top.map(h =>
+      `<div class="lb-item"><span class="lb-saddle" style="background:${h.tw};color:${h.nm};">${h.post}</span><span class="lb-name">${h.name}</span></div>`
+    ).join('');
+  }
+
+  // -------- Generate phase calls --------
+  // Stylistic constraints: NO em-dashes, NO "the flag is up", "looming" not "loomng"
+  function pickRandom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+  function generateCalls(finish, shape) {
+    const winner = POST_TO_HORSE[finish[0]];
+    const second = POST_TO_HORSE[finish[1]];
+    const third = POST_TO_HORSE[finish[2]];
+    const earlySpeedPosts = ROSTER.filter(h => h.style === 'E' || h.style === 'EP').map(h => h.post);
+    const earlyLeader = POST_TO_HORSE[finish.find(p => earlySpeedPosts.includes(p)) || finish[0]];
+
+    const calls = [];
+    const opening = pickRandom([
+      "They're off in the 152nd Kentucky Derby!",
+      "They're away in the Run for the Roses!",
+      "And they break cleanly. The 152nd Kentucky Derby is underway."
+    ]);
+    calls.push({ time: 0.00, text: opening });
+
+    const paceDesc = shape === 'fast' ? 'fast fractions' : shape === 'honest' ? 'honest fractions' : 'a moderate clip';
+    calls.push({
+      time: 0.18,
+      text: `${earlyLeader.name} shows the way, with ${paceDesc} early. The favorite sits comfortably in the second flight.`
+    });
+
+    calls.push({
+      time: 0.42,
+      text: `${earlyLeader.name} cuts out the pace down the backstretch. The field is settled and the move is yet to come.`
+    });
+
+    calls.push({
+      time: 0.64,
+      text: `Around the far turn, ${winner.name} is starting to roll. ${second.name} is asking for more, looming dangerous on the outside.`
+    });
+
+    calls.push({
+      time: 0.82,
+      text: `And here they come for home in the 152nd Kentucky Derby! ${winner.name} is going by them. ${second.name} is fighting back!`
+    });
+
+    calls.push({
+      time: 0.95,
+      text: `${winner.name} is going to win it. ${second.name} a clear second.`
+    });
+
+    return calls;
+  }
+
+  // -------- Update race call display based on current time --------
+  function updateRaceCall(t) {
+    let active = lockedCalls[0];
+    for (let i = 0; i < lockedCalls.length; i++) {
+      if (lockedCalls[i].time <= t) active = lockedCalls[i];
+      else break;
+    }
+    if (!active) return;
+    if (raceCallEl.dataset.text !== active.text) {
+      raceCallEl.textContent = active.text;
+      raceCallEl.classList.remove('empty');
+      raceCallEl.dataset.text = active.text;
+      // Also push to transcript if not already there
+      const seen = Array.from(transcriptList.children).map(li => li.dataset.text);
+      if (!seen.includes(active.text)) {
+        const li = document.createElement('li');
+        const tsLabel = `${Math.round(active.time * 100)}%`;
+        li.dataset.text = active.text;
+        li.innerHTML = `<span class="ts">${tsLabel}</span>${active.text}`;
+        transcriptList.appendChild(li);
+      }
+    }
+  }
+
+  // -------- Run a sim --------
+  function runSim(useExisting) {
+    if (!useExisting) {
+      simIndex = Math.floor(Math.random() * SIMS_DATA.sims.length);
+      lockedFinish = SIMS_DATA.sims[simIndex];
+      lockedShape = samplePaceShape();
+      lockedCalls = generateCalls(lockedFinish, lockedShape);
+      // Reset transcript on new sim
+      transcriptList.innerHTML = '';
+    }
+    raceState = 'racing';
+    frozen = false;
+    // Pace pill
+    pacePill.hidden = false;
+    pacePill.className = 'pace-pill ' + lockedShape;
+    pacePill.textContent = ({ fast: 'Fast pace', honest: 'Honest pace', slow: 'Slow pace' })[lockedShape];
+    // Sim counter
+    simCounter.textContent = `Sim #${simIndex + 1} of ${SIMS_DATA.sims.length.toLocaleString()}`;
+    // Show controls
+    skipBtn.hidden = false;
+    replayBtn.hidden = true;
+    newSimBtn.hidden = true;
+    playBtn.hidden = true;
+    // Show track + leaderboard, hide tote
+    trackWrap.classList.remove('hidden');
+    leaderboard.classList.remove('hidden');
+    toteboard.classList.add('hidden');
+    transcript.classList.remove('hidden');
+    raceCallEl.classList.remove('empty');
+    raceCallEl.textContent = '';
+    raceCallEl.dataset.text = '';
+
+    // Reset horses to gate
+    initHorses();
+
+    const startTime = performance.now();
+    function step(now) {
+      if (frozen) return;
+      const elapsed = now - startTime;
+      const t = Math.min(1, elapsed / RACE_DURATION_MS);
+      renderFrame(t);
+      updateRaceCall(t);
+      if (t < 1) {
+        rafHandle = requestAnimationFrame(step);
+      } else {
+        // Race complete - freeze and show toteboard
+        finishRace();
+      }
+    }
+    rafHandle = requestAnimationFrame(step);
+  }
+
+  function skipToFinish() {
+    if (rafHandle) cancelAnimationFrame(rafHandle);
+    // Push all remaining calls into transcript
+    lockedCalls.forEach(c => updateRaceCall(c.time));
+    // Render final frame
+    renderFrame(1);
+    finishRace();
+  }
+
+  function finishRace() {
+    frozen = true;
+    raceState = 'finished';
+    // Pause briefly on finish
+    setTimeout(() => {
+      // Hide track + leaderboard + pace pill (redundant with toteboard)
+      trackWrap.classList.add('hidden');
+      leaderboard.classList.add('hidden');
+      pacePill.hidden = true;
+      // Render toteboard
+      renderToteboard();
+      toteboard.classList.remove('hidden');
+      // Show controls
+      skipBtn.hidden = true;
+      replayBtn.hidden = false;
+      newSimBtn.hidden = false;
+    }, 1500);
+  }
+
+  // -------- Toteboard rendering --------
+  function renderToteboard() {
+    const winnerPost = lockedFinish[0];
+    const w = POST_TO_HORSE[winnerPost];
+    const s = POST_TO_HORSE[lockedFinish[1]];
+    const tt = POST_TO_HORSE[lockedFinish[2]];
+    const f = POST_TO_HORSE[lockedFinish[3]];
+
+    // Approximated payouts using v3 calibration (matches table widget methodology)
+    const wD = w.ml_dec, sD = s.ml_dec, tD = tt.ml_dec, fD = f.ml_dec;
+    const winPay = wD * 2.0;
+    const winPlace = wD * 1.05 + 1.5;
+    const winShow = wD * 0.65 + 1.5;
+    const sPlace = sD * 0.55 + 1.0;
+    const sShow = sD * 0.40 + 1.0;
+    const tShow = tD * 0.45 + 1.0;
+    const exacta = wD * sD * 1.5;
+    const trifecta = wD * sD * tD * 0.85;
+    const superfecta = wD * sD * tD * fD * 0.40;
+    const fmt = v => '$' + (v >= 100 ? Math.round(v).toLocaleString() : v.toFixed(2));
+
+    // Margins (decorative)
+    const margin = (i) => {
+      if (i === 0) return 'WON';
+      const m = 0.5 + Math.random() * 2;
+      if (i === 1 && m < 0.4) return 'Nose';
+      if (i === 1 && m < 0.7) return 'Hd';
+      if (i === 1 && m < 1.0) return 'Nk';
+      return m.toFixed(1) + 'L';
+    };
+
+    const wpsRows = [
+      ['1st', w, [fmt(winPay), fmt(winPlace), fmt(winShow)]],
+      ['2nd', s, ['—', fmt(sPlace), fmt(sShow)]],
+      ['3rd', tt, ['—', '—', fmt(tShow)]]
+    ];
+
+    const fullOrder = lockedFinish.map((post, i) => {
+      const h = POST_TO_HORSE[post];
+      return `<tr>
+        <td>${i + 1}</td>
+        <td><span class="saddle" style="background:${h.tw};color:${h.nm};">${h.post}</span> ${h.name}</td>
+        <td>${h.style_label}</td>
+        <td class="num">${margin(i)}</td>
+      </tr>`;
+    }).join('');
+
+    toteboard.innerHTML = `
+      <div class="tote-title">Simulated Result · 152nd Kentucky Derby</div>
+      <div class="tote-note">Payouts are projected from morning-line odds. Actual parimutuel pools will differ. This is a single Monte Carlo simulation, not a prediction.</div>
+
+      <div class="tote-section">
+        <h3>Win / Place / Show</h3>
+        <table class="tote-table">
+          <thead><tr><th></th><th>Horse</th><th>Win</th><th>Place</th><th>Show</th></tr></thead>
+          <tbody>
+            ${wpsRows.map(([label, h, [win, plc, shw]]) => `
+              <tr>
+                <td>${label}</td>
+                <td><span class="saddle" style="background:${h.tw};color:${h.nm};">${h.post}</span> ${h.name}</td>
+                <td class="num">${win}</td>
+                <td class="num">${plc}</td>
+                <td class="num">${shw}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="tote-section">
+        <h3>Exotics ($1 base)</h3>
+        <div class="exotics">
+          <div class="exotic-card">
+            <div class="exotic-name">Exacta</div>
+            <div class="exotic-amt">${fmt(exacta)}</div>
+            <div class="exotic-combo">${w.post}-${s.post}</div>
+          </div>
+          <div class="exotic-card">
+            <div class="exotic-name">Trifecta</div>
+            <div class="exotic-amt">${fmt(trifecta)}</div>
+            <div class="exotic-combo">${w.post}-${s.post}-${tt.post}</div>
+          </div>
+          <div class="exotic-card">
+            <div class="exotic-name">Superfecta</div>
+            <div class="exotic-amt">${fmt(superfecta)}</div>
+            <div class="exotic-combo">${w.post}-${s.post}-${tt.post}-${f.post}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tote-section">
+        <h3>Full finish order</h3>
+        <table class="tote-table">
+          <thead><tr><th>Pos</th><th>Horse</th><th>Style</th><th>Margin</th></tr></thead>
+          <tbody>${fullOrder}</tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  // -------- Load sims data --------
+  async function loadSims() {
+    try {
+      const resp = await fetch('data/derby_sims.json');
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+      SIMS_DATA = await resp.json();
+      playBtn.disabled = false;
+      playLabel.textContent = 'Play Sim';
+      simCounter.textContent = `${SIMS_DATA.sims.length.toLocaleString()} sims loaded`;
+    } catch (e) {
+      playLabel.textContent = 'Failed to load sims';
+      console.error('Failed to load sims:', e);
+      simCounter.textContent = 'Error: ' + e.message;
+    }
+  }
+
+  // -------- Wire up controls --------
+  playBtn.addEventListener('click', () => runSim(false));
+  skipBtn.addEventListener('click', skipToFinish);
+  replayBtn.addEventListener('click', () => runSim(true));
+  newSimBtn.addEventListener('click', () => runSim(false));
+
+  // -------- Init --------
+  initHorses();
+  loadSims();
+})();
+</script>
 </body>
 </html>
