@@ -252,7 +252,12 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light;
   const wireOffset = 50;
   const halfL = L / 2;
   const SEG = 60;
-  const EXTENSION = 0.15;
+  // Chute length (visual): gate is positioned this far WEST of the wire on the bottom rail.
+  // 1¼ mile race adds ~1/4 mile of "chute" before the wire. Visual chute = 120px on the rail.
+  const CHUTE_LEN = 120;
+  // Small gallop-out extension past the wire so the freeze frame at finish has horses
+  // slightly past the wire (matches reality after the 4 finishers cross).
+  const EXTENSION = 0.08;
   const RACE_PROG_MAX = 1 + EXTENSION;
 
   function visiblePath() {
@@ -274,19 +279,32 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light;
     return d;
   }
   function animPath() {
-    const wireX = cx + wireOffset;
-    const arcLen = Math.PI * R, loopLen = 2 * L + 2 * arcLen, extLen = EXTENSION * loopLen;
+    // Animation path: starts at the GATE (CHUTE_LEN west of wire), runs east passing
+    // the wire mid-race, then around the full CCW loop back to the wire (finish).
+    // Then a small gallop-out extension east past the wire on the bottom rail
+    // (so the freeze frame after the 4th finisher crosses has horses slightly past wire).
+    const wireX = cx + wireOffset, wireY = cy + R;
+    const gateX = wireX - CHUTE_LEN;
+    let d = `M ${gateX},${wireY}`;
+    // East across bottom: gate → past wire → bottom-right corner
+    d += ` L ${cx + halfL},${cy + R}`;
+    // Right turn arc up to top-right corner
+    for (let i = 1; i <= SEG; i++) { const t = (i / SEG) * Math.PI; d += ` L ${(cx + halfL + R * Math.sin(t)).toFixed(2)},${(cy + R * Math.cos(t)).toFixed(2)}`; }
+    // Top straight west
+    d += ` L ${cx - halfL},${cy - R}`;
+    // Left turn arc down to bottom-left corner
+    for (let i = 1; i <= SEG; i++) { const t = (i / SEG) * Math.PI; d += ` L ${(cx - halfL - R * Math.sin(t)).toFixed(2)},${(cy - R * Math.cos(t)).toFixed(2)}`; }
+    // Bottom east, FINISH at wire
+    d += ` L ${wireX},${wireY}`;
+    // Gallop-out extension: continue east past wire on the bottom rail (small)
+    const arcLen = Math.PI * R, loopLen = 2 * L + 2 * arcLen, wirePos = CHUTE_LEN + loopLen;
+    const extLen = EXTENSION * wirePos;
     const distWireToRight = halfL - wireOffset;
-    let d = visiblePath();
-    let remaining = extLen;
-    if (remaining <= distWireToRight) {
-      d += ` L ${(wireX + remaining).toFixed(2)},${cy + R}`;
+    if (extLen <= distWireToRight) {
+      d += ` L ${(wireX + extLen).toFixed(2)},${cy + R}`;
     } else {
+      // If extension is longer than rail-to-corner distance, cap at corner
       d += ` L ${cx + halfL},${cy + R}`;
-      remaining -= distWireToRight;
-      const arcFrac = remaining / arcLen;
-      const arcSegs = Math.ceil(SEG * arcFrac);
-      for (let i = 1; i <= arcSegs; i++) { const t = (i / arcSegs) * arcFrac * Math.PI; d += ` L ${(cx + halfL + R * Math.sin(t)).toFixed(2)},${(cy + R * Math.cos(t)).toFixed(2)}`; }
     }
     return d;
   }
@@ -359,7 +377,8 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light;
 
     function tickAt(loopFrac, label, opts) {
       opts = opts || {};
-      const len = loopFrac * visTotal;
+      // Tick positions are along the LOOP (after the chute prefix). Skip the chute.
+      const len = CHUTE_LEN + loopFrac * (visTotal - CHUTE_LEN);
       const pt = pathEl.getPointAtLength(len);
       const ahead = pathEl.getPointAtLength(Math.min(pathEl.getTotalLength(), len + 1));
       const dx = ahead.x - pt.x, dy = ahead.y - pt.y;
@@ -403,6 +422,31 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light;
     tickAt(0.40, '1/2', {});
     tickAt(0.60, '3/4', {});
     tickAt(0.80, 'Stretch', {});
+
+    // Gate marker — small tick + label at gate position (CHUTE_LEN west of wire on bottom rail)
+    {
+      const wireX = cx + wireOffset;
+      const gateX = wireX - CHUTE_LEN;
+      const gateY = cy + R;
+      const inner = { x: gateX, y: gateY - (ringWidth/2 - 2) };
+      const outer = { x: gateX, y: gateY + (ringWidth/2 - 2) };
+      const line = document.createElementNS(NS, 'line');
+      line.setAttribute('x1', inner.x); line.setAttribute('y1', inner.y);
+      line.setAttribute('x2', outer.x); line.setAttribute('y2', outer.y);
+      line.setAttribute('stroke', 'rgba(255,255,255,0.85)');
+      line.setAttribute('stroke-width', '1.8');
+      line.setAttribute('stroke-dasharray', '3,2');
+      svgEl.appendChild(line);
+      const text = document.createElementNS(NS, 'text');
+      text.setAttribute('x', gateX);
+      text.setAttribute('y', gateY + ringWidth/2 + 12);
+      text.setAttribute('text-anchor', 'middle');
+      text.setAttribute('font-size', '10');
+      text.setAttribute('fill', '#6b6b6b');
+      text.setAttribute('font-family', 'var(--font-sans)');
+      text.textContent = 'GATE';
+      svgEl.appendChild(text);
+    }
 
     horses.forEach((h, i) => {
       const g = document.createElementNS(NS, 'g');
