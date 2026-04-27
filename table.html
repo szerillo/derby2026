@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Kentucky Derby 2026 — Monte Carlo Probabilities</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --bg-muted: #f6f4f0;
+  --text: #1a1a1a;
+  --text-muted: #6b6b6b;
+  --border: #e5e1d8;
+  --accent: #8a1538;        /* Derby burgundy */
+  --accent-dark: #5a0d24;
+  --rose: #c9a0b1;
+  --gold: #c8a951;
+  --pos: #1d8348;
+  --pos-soft: #d4f0dc;
+  --neg: #b03030;
+  --neg-soft: #f4d6d4;
+  --neutral: #6b6b6b;
+}
+.kd-widget {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0;
+  line-height: 1.4;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+.kd-widget *, .kd-widget *::before, .kd-widget *::after { box-sizing: border-box; }
+.kd-header {
+  position: relative;
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+  color: #fff;
+  padding: 18px 22px;
+  border-radius: 8px 8px 0 0;
+  text-align: center;
+}
+.kd-title {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0 0 4px;
+  letter-spacing: 0.2px;
+}
+.kd-subtitle {
+  font-size: 13px;
+  opacity: 0.85;
+  margin: 0;
+}
+.kd-byline-header {
+  font-size: 12px;
+  margin-top: 6px;
+  opacity: 0.9;
+}
+.kd-byline-header a {
+  color: #fff;
+  text-decoration: none;
+  font-weight: 600;
+  border-bottom: 1px dotted rgba(255,255,255,0.5);
+}
+.kd-byline-header a:hover { border-bottom-style: solid; }
+.kd-brand {
+  position: absolute;
+  top: 14px;
+  right: 18px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.kd-brand-text {
+  font-weight: 900;
+  font-size: 16px;
+  letter-spacing: -0.3px;
+  color: #fff;
+}
+.kd-brand-check {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #11c75c;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.kd-brand-check svg { width: 12px; height: 12px; }
+@media (max-width: 520px) {
+  .kd-brand { position: static; justify-content: center; margin-bottom: 8px; }
+  .kd-header { padding-top: 14px; }
+}
+.kd-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 22px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+}
+.kd-controls span.label {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+.kd-sort-btn {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 5px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  color: var(--text);
+  font-family: inherit;
+}
+.kd-sort-btn:hover { background: var(--bg-muted); }
+.kd-sort-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.kd-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.kd-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  min-width: 480px;
+}
+.kd-table thead th {
+  background: var(--bg-muted);
+  border-bottom: 2px solid var(--border);
+  padding: 10px 8px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.kd-table thead th.tcenter { text-align: center; }
+.kd-table tbody td {
+  padding: 10px 8px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+.kd-table tbody tr:hover { background: var(--bg-muted); }
+.cell-post { width: 48px; text-align: center; }
+.saddle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px; height: 32px;
+  border-radius: 5px;
+  font-weight: 800;
+  font-size: 14px;
+  border: 1px solid rgba(0,0,0,0.1);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+}
+.cell-name { min-width: 180px; }
+.horse-name-row { display: flex; align-items: baseline; gap: 8px; }
+.horse-name { font-weight: 700; font-size: 14px; }
+.horse-ml { font-size: 11px; color: var(--text-muted); font-weight: 600; }
+.horse-meta { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+.cell-num { text-align: center; white-space: nowrap; }
+.cell-fair { font-weight: 600; }
+.cell-edge {
+  text-align: center;
+  font-weight: 700;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  border-radius: 4px;
+}
+.edge-strong-pos { color: #0d5128; background: var(--pos-soft); }
+.edge-pos { color: var(--pos); }
+.edge-neutral { color: var(--neutral); }
+.edge-neg { color: var(--neg); }
+.edge-strong-neg { color: #6b1818; background: var(--neg-soft); }
+.cell-pct { font-weight: 600; }
+.cell-style {
+  font-size: 12px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.kd-footer {
+  padding: 12px 22px;
+  font-size: 11px;
+  color: var(--text-muted);
+  border-top: 1px solid var(--border);
+  background: var(--bg-muted);
+  border-radius: 0 0 8px 8px;
+  line-height: 1.5;
+}
+.kd-byline {
+  font-size: 12px;
+  color: var(--text);
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+.kd-byline a {
+  color: var(--accent);
+  text-decoration: none;
+}
+.kd-byline a:hover { text-decoration: underline; }
+@media (max-width: 700px) {
+  .kd-title { font-size: 18px; }
+}
+</style>
+</head>
+<body>
+<div class="kd-widget" id="kd-widget">
+  <div class="kd-header">
+    <div class="kd-brand">
+      <span class="kd-brand-text">ACTION</span>
+      <span class="kd-brand-check"><svg viewBox="0 0 14 14" xmlns="http://www.w3.org/2000/svg"><path d="M3 7.2 L6 10 L11 4" stroke="#fff" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </div>
+    <div class="kd-title">152nd Kentucky Derby</div>
+    <div class="kd-subtitle">10,000 simulations · Churchill Downs · 1 1/4 miles</div>
+    <div class="kd-byline-header">By <a href="https://twitter.com/SeanZerillo" target="_blank" rel="noopener">@SeanZerillo</a></div>
+  </div>
+  <div class="kd-controls">
+    <span class="label">Sort:</span>
+    <button class="kd-sort-btn active" data-sort="win">Win %</button>
+    <button class="kd-sort-btn" data-sort="post">Post</button>
+    <button class="kd-sort-btn" data-sort="edge">Edge</button>
+  </div>
+  <div class="kd-table-wrap">
+    <table class="kd-table">
+      <thead>
+        <tr>
+          <th>Post</th>
+          <th>Horse</th>
+          <th class="tcenter">Fair</th>
+          <th class="tcenter">Edge</th>
+          <th class="tcenter">Win %</th>
+          <th class="tcenter">Top 4 %</th>
+        </tr>
+      </thead>
+      <tbody id="kd-table-body">
+<tr data-post="1" data-win="0.1717" data-edge="-0.02830000000000002">
+  <td class="cell-post"><span class="saddle" style="background:#E11A1A;color:#FFFFFF;">1</span></td>
+  <td class="cell-name">
+    <div class="horse-name-row">
+      <span class="horse-name">Renegade</span>
+      <span class="horse-ml">4-1 ML</span>
+    </div>
+    <div class="horse-meta">Closer · 98 BEY / 117 TFUS · Ortiz I Jr / Pletcher</div>
+  </td>
+  <td class="cell-num cell-fair">4.8-1</td>
+  <td class="cell-edge edge-neg">-2.8%</td>
+  <td class="cell-num cell-pct">17.2%</td>
+  <td class="cell-num">57.8%</td>
+</tr>
+<tr data-post="2" data-win="0.0004" data-edge="-0.031858064516129034">
+  <td class="cell-post"><span class="saddle" style="background:#FFFFFF;color:#000000;">2</span></td>
+  <td class="cell-name">
+    <div class="horse-name-row">
+      <span class="horse-name">Albus</span>
+      <span class="horse-ml">30-1 ML</span>
+    </div>
+    <div class="horse-meta">Tactical · 84 BEY / 101 TFUS · Franco / R Mott</div>
+  </td>
+  <td class="cell-num cell-fair">2499-1</td>
+  <td class="cell-edge edge-neg">-3.2%</td>
+  <td class="cell-num cell-pct">0.0%</td>
+  <td class="cell-num">1.3%</td>
+</tr>
+<tr data-post="3" data-win="0.0007" data-edge="-0.018907843137254902">
+  <td class="cell-post"><span class="saddle" style="background:#1B4FB0;color:#FFFFFF;">3</span></td>
+  <td class="cell-name">
+    <div class="horse-name-row">
+      <span class="horse-name">Intrepido</span>
+      <span class="horse-ml">50-1 ML</span>
+    </div>
+    <div class="horse-meta">Presser · 89 BEY / 112 TFUS · Berrios / Mullins</div>
+  </td>
+  <td class="cell-num cell-fair">1428-1</td>
+  <td class="cell-edge edge-neg">-1.9%</td>
+  <td class="cell-num cell-pct">0.1%</td>
+  <td class="cell-num">1.0%</td>
+</tr>
+<tr data-post="4" data-win="0.002" data-edge="-0.0176078431372549">
+  <td class="cell-post"><span class="saddle" style="background:#F4DA15;color:#000000;">4</span></td>
+  <td class="cell-name">
+    <div class="horse-name-row">
+      <span class="horse-name">Litmus Test</span>
+      <span class="horse-ml">50-1 ML</span>
+    </div>
+    <div class="horse-meta">Pace · 96 BEY / 114 TFUS · Garcia M / Baffert</div>
+  </td>
+  <td class="cell-num cell-fair">499-1</td>
+  <td class="cell-edge edge-neg">-1.8%</td>
+  <td class="cell-num cell-pct">0.2%</td>
+  <td class="cell-num">3.4%</td>
+</tr>
+<tr data-post="5" data-win="0.0002" data-edge="-0.03205806451612903">
+  <td class="cell-post"><span class="saddle" style="background:#1F8A3A;color:#FFFFFF;">5</span></td>
+  <td class="cell-name">
+    <div class="horse-name-row">
+      <span class="horse-name">Right to Party</span>
+      <span class="horse-ml">30-1 ML</span>
+    </div>
+    <div class="horse-meta">Closer · 81 BEY / 104 TFUS · Elliott / McPeek</div>
+  </td>
+  <td class="cell-num cell-fair">4999-1</td>
+  <td class="cell-edge edge-neg">-3.2%</td>
+  <td class="cell-num cell-pct">0.0%</td>
+  <td class="cell-num">0.4%</td>
+</tr>
+<tr data-post="6" data-win="0.1988" data-edge="0.055942857142857155">
+  <td class="cell-post"><span class="saddle" style="background:#000000;color:#FFD400;">6</span></td>
+  <td class="cell-name">
+    <div class="horse-name-row">
+      <span class="horse-name">Commandment</span>
+      <span class="horse-ml">6-1 ML</span>
+    </div>
+    <div class="horse-meta">Presser · 101 BEY / 115 TFUS · Saez / Cox</div>
+  </td>
+  <td class="cell-num cell-fair">4.0-1</td>
+  <td class="cell-edge edge-strong-pos">+5.6%</td>
+  <td class="cell-num cell-pct">19.9%</td>
+  <td class="cell-num">61.5%</td>
+</tr>
+<tr data-post="7" data-win="0.008" data-edge="-0.039619047619047616">
+  <td class="cell-post"><span class="saddle" style="background:#F26B1F;color:#000000;">7</span></td>
+  <td class="cell-name">
+    <div class="horse-name-row">
+      <span class="horse-name">Danon Bourbon</span>
+      <span class="horse-ml">20-1 ML</span>
+    </div>
+    <div class="horse-meta">Presser · — BEY / — TFUS · Nishimura / Ikezoe (Jpn)</div>
+  </td>
+  <td class="cell-num cell-fair">124-1</td>
+  <td class="cell-edge edge-strong-neg">-4.0%</td>
+  <td class="cell-num cell-pct">0.8%</td>
+  <td class="cell-num">5.3%</td>
+</tr>
+<tr data-post="8" data-win="0.0655" data-edge="0.0030000000000000027">
+  <td class="cell-post"><span class="saddle" style="background:#FFADC8;color:#000000;">8</span></td>
+  <td class="cell-name">
+    <div class="horse-name-row">
+      <span class="horse-name">So Happy</span>
+      <span class="horse-ml">15-1 ML</span>
+    </div>
+    <div class="horse-meta">Tactical · 100 BEY / 120 TFUS · Smith M E / Glatt</div>
+  </td>
+  <td class="cell-num cell-fair">14.3-1</td>
+  <td class="cell-edge edge-neutral">+0.3%</td>
+  <td class="cell-num cell-pct">6.6%</td>
+  <td class="cell-num">34.1%</td>
+</tr>
+<tr data-post="9" data-win="0.0773" data-edge="-0.013609090909090918">
+  <td class="cell-post"><span class="saddle" style="background:#1FD9E8;color:#000000;">9</span></td>
+  <td class="cell-name">
+    <div class="horse-name-row">
+      <span class="horse-name">The Puma</span>
+      <span class="horse-ml">10-1 ML</span>
+    </div>
+    <div class="horse-meta">Presser · 100 BEY / 115 TFUS · Castellano / Delgado</div>
+  </td>
+  <td class="cell-num cell-fair">11.9-1</td>
+  <td class="cell-edge edge-neutral">-1.4%</td>
+  <td class="cell-num cell-pct">7.7%</td>
+  <td class="cell-num">37.7%</td>
+</tr>
+<tr data-post="10" data-win="0.0123" data-edge="-0.019958064516129033">
+  <td class="cell-post"><span class="saddle" style="background:#7B1FA2;color:#FFFFFF;">10</span></td>
+  <td class="cell-name">
+    <div class="horse-name-row">
+      <span class="horse-name">Wonder Dean</span>
+      <span class="horse-ml">30-1 ML</span>
+    </div>
+    <div class="horse-meta">Presser · — BEY / 107 TFUS · Sakai / Takayanagi (Jpn)</div>
+  </td>
+  <td class="cell-num cell-fair">80.3-1</td>
+  <td class="cell-edge edge-neg">-2.0%</td>
+  <td class="cell-num cell-pct">1.2%</td>
+  <td class="cell-num">8.4%</td>
+</tr>
+<tr data-post="11" data-win="0.0015" data-edge="-0.046119047619047615">
+  <td class="cell-post"><span class="saddle" style="background:#9E9E9E;color:#E11A1A;">11</span></td>
+  <td class="cell-name">
+    <div class="horse-name-row">
+      <span class="horse-name">Incredibolt</span>
+      <span class="horse-ml">20-1 ML</span>
+    </div>
+    <div class="horse-meta">Presser · 88 BEY / 107 TFUS · Torres J A / R Mott</div>
+  </td>
+  <td class="cell-num cell-fair">666-1</td>
+  <td class="cell-edge edge-strong-neg">-4.6%</td>
+  <td class="cell-num cell-pct">0.1%</td>
+  <td class="cell-num">1.6%</td>
+</tr>
+<tr data-post="12" data-win="0.1493" data-edge="0.03818888888888888">
+  <td class="cell-post"><span class="saddle" style="background:#B6E04C;color:#000000;">12</span></td>
+  <td class="cell-name">
+    <div class="horse-name-row">
+      <span class="horse-name">Chief Wallabee</span>
+      <span class="horse-ml">8-1 ML</span>
+    </div>
+    <div class="horse-meta">Presser · 100 BEY / 114 TFUS · Alvarado / W Mott</div>
+  </td>
+  <td class="cell-num cell-fair">5.7-1</td>
+  <td class="cell-edge edge-strong-pos">+3.8%</td>
+  <td class="cell-num cell-pct">14.9%</td>
+  <td class="cell-num">53.7%</td>
+</tr>
+<tr data-post="13" data-win="0.0098" data-edge="-0.03781904761904761">
+  <td class="cell-post"><span class="saddle" style="background:#4A2C1A;color:#FFFFFF;">13</span></td>
+  <td class="cell-name">
+    <div class="horse-name-row">
+      <span class="horse-name">Silent Tactic</span>
+      <span class="horse-ml">20-1 ML</span>
+    </div>
+    <div class="horse-meta">Closer · 91 BEY / 113 TFUS · Torres C A / Casse</div>
+  </td>
+  <td class="cell-num cell-fair">101-1</td>
+  <td class="cell-edge edge-strong-neg">-3.8%</td>
+  <td class="cell-num cell-pct">1.0%</td>
+  <td class="cell-num">9.8%</td>
+</tr>
+<tr data-post="14" data-win="0.0386" data-edge="-0.009019047619047614">
+  <td class="cell-post"><span class="saddle" style="background:#6F1010;color:#FFD400;">14</span></td>
+  <td class="cell-name">
+    <div class="horse-name-row">
+      <span class="horse-name">Potente</span>
+      <span class="horse-ml">20-1 ML</span>
+    </div>
+    <div class="horse-meta">Tactical · 95 BEY / 118 TFUS · Hernandez J J / Baffert</div>
+  </td>
+  <td class="cell-num cell-fair">24.9-1</td>
+  <td class="cell-edge edge-neutral">-0.9%</td>
+  <td class="cell-num cell-pct">3.9%</td>
+  <td class="cell-num">25.9%</td>
+</tr>
+<tr data-post="15" data-win="0.0405" data-edge="-0.022">
+  <td class="cell-post"><span class="saddle" style="background:#C9B98A;color:#000000;">15</span></td>
+  <td class="cell-name">
+    <div class="horse-name-row">
+      <span class="horse-name">Emerging Market</span>
+      <span class="horse-ml">15-1 ML</span>
+    </div>
+    <div class="horse-meta">Presser · 97 BEY / 110 TFUS · Prat / C Brown</div>
+  </td>
+  <td class="cell-num cell-fair">23.7-1</td>
+  <td class="cell-edge edge-neg">-2.2%</td>
+  <td class="cell-num cell-pct">4.0%</td>
+  <td class="cell-num">24.7%</td>
+</tr>
+<tr data-post="16" data-win="0.0006" data-edge="-0.03165806451612903">
+  <td class="cell-post"><span class="saddle" style="background:#6FA8DC;color:#F26B1F;">16</span></td>
+  <td class="cell-name">
+    <div class="horse-name-row">
+      <span class="horse-name">Pavlovian</span>
+      <span class="horse-ml">30-1 ML</span>
+    </div>
+    <div class="horse-meta">Tactical · 90 BEY / 112 TFUS · Maldonado / O'Neill</div>
+  </td>
+  <td class="cell-num cell-fair">1666-1</td>
+  <td class="cell-edge edge-neg">-3.2%</td>
+  <td class="cell-num cell-pct">0.1%</td>
+  <td class="cell-num">1.0%</td>
+</tr>
+<tr data-post="17" data-win="0.0001" data-edge="-0.019507843137254902">
+  <td class="cell-post"><span class="saddle" style="background:#0B1F4D;color:#FFFFFF;">17</span></td>
+  <td class="cell-name">
+    <div class="horse-name-row">
+      <span class="horse-name">Six Speed</span>
+      <span class="horse-ml">50-1 ML</span>
+    </div>
+    <div class="horse-meta">Pace · — BEY / 103 TFUS · Hernandez B J Jr / Seemar (UAE)</div>
+  </td>
+  <td class="cell-num cell-fair">9999-1</td>
+  <td class="cell-edge edge-neg">-2.0%</td>
+  <td class="cell-num cell-pct">0.0%</td>
+  <td class="cell-num">0.2%</td>
+</tr>
+<tr data-post="18" data-win="0.2049" data-edge="0.06204285714285715">
+  <td class="cell-post"><span class="saddle" style="background:#0E3F1A;color:#FFD400;">18</span></td>
+  <td class="cell-name">
+    <div class="horse-name-row">
+      <span class="horse-name">Further Ado</span>
+      <span class="horse-ml">6-1 ML</span>
+    </div>
+    <div class="horse-meta">Tactical · 106 BEY / 121 TFUS · Velazquez / Cox</div>
+  </td>
+  <td class="cell-num cell-fair">3.9-1</td>
+  <td class="cell-edge edge-strong-pos">+6.2%</td>
+  <td class="cell-num cell-pct">20.5%</td>
+  <td class="cell-num">55.9%</td>
+</tr>
+<tr data-post="19" data-win="0.01" data-edge="-0.02225806451612903">
+  <td class="cell-post"><span class="saddle" style="background:#6F8FAF;color:#E11A1A;">19</span></td>
+  <td class="cell-name">
+    <div class="horse-name-row">
+      <span class="horse-name">Golden Tempo</span>
+      <span class="horse-ml">30-1 ML</span>
+    </div>
+    <div class="horse-meta">Closer · 88 BEY / 109 TFUS · Ortiz J L / DeVaux</div>
+  </td>
+  <td class="cell-num cell-fair">99.0-1</td>
+  <td class="cell-edge edge-neg">-2.2%</td>
+  <td class="cell-num cell-pct">1.0%</td>
+  <td class="cell-num">9.2%</td>
+</tr>
+<tr data-post="20" data-win="0.0078" data-edge="-0.039819047619047615">
+  <td class="cell-post"><span class="saddle" style="background:#E91E8C;color:#FFD400;">20</span></td>
+  <td class="cell-name">
+    <div class="horse-name-row">
+      <span class="horse-name">Fulleffort</span>
+      <span class="horse-ml">20-1 ML</span>
+    </div>
+    <div class="horse-meta">Closer · 94 BEY / 110 TFUS · Gaffalione / Cox</div>
+  </td>
+  <td class="cell-num cell-fair">127-1</td>
+  <td class="cell-edge edge-strong-neg">-4.0%</td>
+  <td class="cell-num cell-pct">0.8%</td>
+  <td class="cell-num">7.1%</td>
+</tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="kd-footer">
+    BEY and TFUS values are highest lifetime figures (Beyer Speed Figure and TimeformUS Speed Figure, different scales). Edge is sim win % minus morning-line implied % in percentage points. Pace shape sampled per simulation; result reflects 75% fast / 22% honest / 3% slow probability based on field configuration.
+  </div>
+</div>
+<script>
+(function() {
+  var tbody = document.getElementById("kd-table-body");
+  var btns = document.querySelectorAll(".kd-sort-btn");
+  function sortBy(key) {
+    var rows = Array.prototype.slice.call(tbody.querySelectorAll("tr"));
+    rows.sort(function(a, b) {
+      var av = parseFloat(a.dataset[key]);
+      var bv = parseFloat(b.dataset[key]);
+      if (key === "post") return av - bv;
+      return bv - av;
+    });
+    rows.forEach(function(r) { tbody.appendChild(r); });
+  }
+  btns.forEach(function(btn) {
+    btn.addEventListener("click", function() {
+      btns.forEach(function(b) { b.classList.remove("active"); });
+      btn.classList.add("active");
+      sortBy(btn.dataset.sort);
+    });
+  });
+  // Default sort: Win %
+  sortBy("win");
+})();
+</script>
+</body>
+</html>
