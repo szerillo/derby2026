@@ -34,10 +34,10 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light;
 .action-brand-check svg { width: 10px; height: 10px; }
 .dt { background: #f6f4f0; border-radius: 0 0 8px 8px; padding-bottom: 0; }
 .dt-hint {
+  flex: 1;
   font-size: 11px;
-  color: #6b6b6b;
+  color: #1a1a1a;
   text-align: center;
-  padding: 6px 8px 0;
   letter-spacing: 0.2px;
 }
 .dt-hint.hidden { display: none; }
@@ -45,11 +45,13 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light;
   .action-brand { position: static; justify-content: center; margin-bottom: 6px; }
   .sim-doc-title { font-size: 16px; }
   .sim-frame { padding: 8px; }
-  .dt-hint { font-size: 10px; padding: 5px 6px 0; }
+  .dt-hint { font-size: 10px; }
   /* Mobile leaderboard: hide names, show silks only — fits 4 in 360px */
   .leaderboard-name { display: none; }
   .leaderboard { gap: 10px !important; padding: 5px 10px !important; }
   .leaderboard-item { gap: 4px !important; }
+  /* On narrowest screens, hide the hint to save horizontal space */
+  .dt-hint { display: none; }
 }
 
 .dt { font-family: var(--font-sans); position: relative; }
@@ -202,14 +204,14 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light;
   <div class="dt">
   <div class="dt-stage">
     <div class="dt-top-bar">
-      <span class="sim-counter" id="sim-counter" style="font-size:9px;color:rgba(245,200,75,0.55);letter-spacing:1px;font-family:var(--font-sans);">Loading 10,000 sims…</span>
+      <span class="sim-counter" id="sim-counter" style="font-size:11px;color:#1a1a1a;font-weight:600;font-family:var(--font-sans);flex-shrink:0;">Loading 10,000 sims…</span>
+      <span class="dt-hint" id="dt-hint">Tap any horse # for odds, jockey + projected win %</span>
       <div class="pace-badge" id="pace-badge"><span class="pace-badge-lbl">PACE</span><span class="pace-badge-val">—</span></div>
       <div class="dt-buttons">
         <button class="dt-replay-btn" id="dt-replay" disabled>Replay</button>
         <button class="dt-play-btn" id="dt-play" disabled>New Sim</button>
       </div>
     </div>
-    <div class="dt-hint" id="dt-hint">Tap any horse # for odds, jockey + projected win %</div>
     <div class="dt-leaderboard-row" id="dt-leaderboard-row">
       <div class="leaderboard" id="leaderboard"></div>
     </div>
@@ -233,11 +235,11 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light;
     SIMS_DATA = d;
     document.getElementById('dt-play').disabled = false;
     const counterEl = document.getElementById('sim-counter');
-    if (counterEl) counterEl.textContent = d.sims.length.toLocaleString() + ' sims loaded';
+    if (counterEl) counterEl.textContent = d.sims.length.toLocaleString() + ' SIMS';
   }).catch(e => {
     console.error('Failed to load sims data:', e);
     const counterEl = document.getElementById('sim-counter');
-    if (counterEl) counterEl.textContent = 'Failed to load sims';
+    if (counterEl) counterEl.textContent = 'Failed to load';
   });
 
   const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
