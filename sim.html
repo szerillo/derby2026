@@ -496,9 +496,9 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light;
   }
 
   function paceCurve(style, t) {
-    if (style === 'E') return t < 0.7 ? (t/0.7) * 0.82 : 0.82 + ((t-0.7)/0.3) * 0.18;
-    if (style === 'EP') return t < 0.6 ? (t/0.6) * 0.70 : 0.70 + ((t-0.6)/0.4) * 0.30;
-    if (style === 'S') return t < 0.5 ? (t/0.5) * 0.28 : 0.28 + ((t-0.5)/0.5) * 0.72;
+    if (style === 'E') return t < 0.7 ? (t/0.7) * 0.76 : 0.76 + ((t-0.7)/0.3) * 0.24;
+    if (style === 'EP') return t < 0.6 ? (t/0.6) * 0.64 : 0.64 + ((t-0.6)/0.4) * 0.36;
+    if (style === 'S') return t < 0.5 ? (t/0.5) * 0.40 : 0.40 + ((t-0.5)/0.5) * 0.60;
     return t;
   }
 
@@ -757,7 +757,7 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light;
         return { ...h, rank: rank, tripNote: tripNote, draw: 100 - rank };
       });
       const N = sorted.length;
-      sorted.forEach((d, rank) => { d.raceTimeFactor = 0.82 + 0.18 * (rank / (N - 1)); });
+      sorted.forEach((d, rank) => { d.raceTimeFactor = 0.90 + 0.10 * (rank / (N - 1)); });
       factorByPost = {};
       sorted.forEach(d => { factorByPost[d.post] = d.raceTimeFactor; });
       // lengthsBehind: 0 for winner, then progressive gap with randomness
