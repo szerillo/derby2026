@@ -254,9 +254,10 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light;
   const wireOffset = 50;
   const halfL = L / 2;
   const SEG = 60;
-  // Chute length (visual): gate is positioned this far WEST of the wire on the bottom rail.
-  // 1¼ mile race adds ~1/4 mile of "chute" before the wire. Visual chute = 120px on the rail.
-  const CHUTE_LEN = 120;
+  // Gate is at the TOP OF THE STRETCH (west end of homestretch / bottom-left corner of oval).
+  // 1¼ mile race: gate → east through homestretch (passing wire mid-race) → CCW around oval →
+  // back through homestretch → wire (final pass). CHUTE_LEN = gate-to-wire distance on first pass.
+  const CHUTE_LEN = halfL + wireOffset;
   // Small gallop-out extension past the wire so the freeze frame at finish has horses
   // slightly past the wire (matches reality after the 4 finishers cross).
   const EXTENSION = 0.08;
@@ -281,31 +282,29 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light;
     return d;
   }
   function animPath() {
-    // Animation path: starts at the GATE (CHUTE_LEN west of wire), runs east passing
-    // the wire mid-race, then around the full CCW loop back to the wire (finish).
-    // Then a small gallop-out extension east past the wire on the bottom rail
-    // (so the freeze frame after the 4th finisher crosses has horses slightly past wire).
+    // Gate at top of stretch (bottom-left corner / west end of homestretch).
+    // Path: gate → east through homestretch (passing wire mid-race) → CCW around oval → wire (final pass).
+    // Then a small gallop-out east past the wire on the bottom rail.
     const wireX = cx + wireOffset, wireY = cy + R;
     const gateX = wireX - CHUTE_LEN;
     let d = `M ${gateX},${wireY}`;
     // East across bottom: gate → past wire → bottom-right corner
     d += ` L ${cx + halfL},${cy + R}`;
-    // Right turn arc up to top-right corner
+    // Clubhouse turn arc (right curve, CCW from bottom-right to top-right)
     for (let i = 1; i <= SEG; i++) { const t = (i / SEG) * Math.PI; d += ` L ${(cx + halfL + R * Math.sin(t)).toFixed(2)},${(cy + R * Math.cos(t)).toFixed(2)}`; }
-    // Top straight west
+    // Backstretch (top, east to west)
     d += ` L ${cx - halfL},${cy - R}`;
-    // Left turn arc down to bottom-left corner
+    // Far turn arc (left curve, CCW from top-left to bottom-left)
     for (let i = 1; i <= SEG; i++) { const t = (i / SEG) * Math.PI; d += ` L ${(cx - halfL - R * Math.sin(t)).toFixed(2)},${(cy - R * Math.cos(t)).toFixed(2)}`; }
-    // Bottom east, FINISH at wire
+    // Homestretch (second pass), bottom-left → wire
     d += ` L ${wireX},${wireY}`;
-    // Gallop-out extension: continue east past wire on the bottom rail (small)
+    // Gallop-out east past wire on bottom rail
     const arcLen = Math.PI * R, loopLen = 2 * L + 2 * arcLen, wirePos = CHUTE_LEN + loopLen;
     const extLen = EXTENSION * wirePos;
     const distWireToRight = halfL - wireOffset;
     if (extLen <= distWireToRight) {
       d += ` L ${(wireX + extLen).toFixed(2)},${cy + R}`;
     } else {
-      // If extension is longer than rail-to-corner distance, cap at corner
       d += ` L ${cx + halfL},${cy + R}`;
     }
     return d;
