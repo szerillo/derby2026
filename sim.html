@@ -150,7 +150,8 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light;
 .tb-rest-item { display: inline-flex; align-items: center; gap: 4px; }
 .tb-rest-pos { font-size: 10px; color: rgba(245,200,75,0.55); font-variant-numeric: tabular-nums; }
 .tb-rest-silk { display: inline-block; width: 20px; height: 20px; border-radius: 3px; text-align: center; line-height: 20px; font-size: 10px; font-weight: 500; border: 0.5px solid rgba(0,0,0,0.4); cursor: help; }
-.tb-meta { font-size: 9px; color: rgba(245,200,75,0.4); margin-top: 10px; padding-top: 8px; border-top: 0.5px solid rgba(245,200,75,0.12); letter-spacing: 0.5px; text-align: center; }
+.tb-disclaimer { font-size: 9px; color: rgba(245,200,75,0.55); margin-top: 12px; padding-top: 8px; border-top: 0.5px solid rgba(245,200,75,0.12); font-style: italic; text-align: center; line-height: 1.4; }
+.tb-meta { font-size: 9px; color: rgba(245,200,75,0.4); margin-top: 6px; letter-spacing: 0.5px; text-align: center; }
 
 @media (max-width: 600px) {
   .dt-top-bar { gap: 6px; }
@@ -185,6 +186,7 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light;
   .tb-exotic-lbl { font-size: 8px; letter-spacing: 0.5px; }
   .tb-exotic-combo { font-size: 11px; }
   .tb-exotic-pay { font-size: 12px; }
+  .tb-disclaimer { font-size: 8px; line-height: 1.35; }
   .tb-meta { font-size: 8px; }
 }
 
@@ -770,7 +772,8 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light;
       }
       // Factor: top 4 derived from lengthsBehind (so gallop-out at racing speed lands at correct lengths past wire)
       // Back of field: smooth convex extension from rank-3 factor to 1.0 (preserves stretch spread)
-      const T_PER_LENGTH = 0.00122; // = 0.0014 path / 1.149 racing speed (ensures 1 length past wire = 1 length physically)
+      // T_PER_LENGTH is scaled ~3x physical to make 1 length = ~1 horse-width visible on the stylized SVG
+      const T_PER_LENGTH = 0.0036;
       const baseFactor = 0.87;
       const f3 = baseFactor + sorted[3].lengthsBehind * T_PER_LENGTH;
       sorted.forEach((d, rank) => {
@@ -939,6 +942,7 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light;
           <div class="tb-exotic"><div class="tb-exotic-lbl">$1.00 SUPERFECTA</div><div class="tb-exotic-combo">${w.post}-${s.post}-${t.post}-${f.post}</div><div class="tb-exotic-pay">${fmtMoney(superfecta)}</div></div>
         </div>
         <div class="tb-rest"><span class="tb-rest-lbl">FULL ORDER&nbsp;</span>${restHtml}</div>
+        <div class="tb-disclaimer">Approximate payouts modeled from Morning Line odds &amp; 30 years of Derby board finishers</div>
         <div class="tb-meta">SIM ${(currentSimIdx + 1).toLocaleString()} / ${SIMS_DATA.sims.length.toLocaleString()}</div>
       </div>
     `;
