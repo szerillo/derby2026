@@ -729,13 +729,15 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light;
     updatePaceBadge(null);
     clearScript();
 
-    let paceShape, sorted, factorByPost, noiseByPost, isPhotoFinish, fourthFinishTime, lockedCalls;
+    let paceShape, sorted, factorByPost, noiseByPost, lbByPost, fourthLB, isPhotoFinish, fourthFinishTime, lockedCalls;
 
     if (replay && lastSimState) {
       paceShape = lastSimState.paceShape;
       sorted = lastSimState.sorted;
       factorByPost = lastSimState.factorByPost;
       noiseByPost = lastSimState.noiseByPost;
+      lbByPost = lastSimState.lbByPost;
+      fourthLB = lastSimState.fourthLB;
       isPhotoFinish = lastSimState.isPhotoFinish;
       fourthFinishTime = lastSimState.fourthFinishTime;
       lockedCalls = lastSimState.lockedCalls;
@@ -769,7 +771,7 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light;
           f2: 2.6 + Math.random() * 1.1,
           p1: Math.random() * Math.PI * 2,
           p2: Math.random() * Math.PI * 2,
-          amp: 0.0055 + Math.random() * 0.0035
+          amp: 0.0032 + Math.random() * 0.0022
         };
       });
       // lengthsBehind: 0 for winner, then progressive gap with randomness
@@ -780,11 +782,15 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light;
       for (let i = 1; i < sorted.length; i++) {
         if (sorted[i].lengthsBehind <= sorted[i-1].lengthsBehind) sorted[i].lengthsBehind = sorted[i-1].lengthsBehind + 0.3;
       }
+      // Per-horse lengthsBehind lookup (drives accurate gallop-out spacing)
+      lbByPost = {};
+      sorted.forEach(d => { lbByPost[d.post] = d.lengthsBehind; });
       simCount++;
       isPhotoFinish = sorted[1].lengthsBehind < 0.55;
       fourthFinishTime = sorted[3].raceTimeFactor;
+      fourthLB = sorted[3].lengthsBehind;
       lockedCalls = {};
-      lastSimState = { paceShape, sorted, factorByPost, noiseByPost, isPhotoFinish, fourthFinishTime, lockedCalls };
+      lastSimState = { paceShape, sorted, factorByPost, noiseByPost, lbByPost, fourthLB, isPhotoFinish, fourthFinishTime, lockedCalls };
     }
 
     const phases = [
@@ -819,8 +825,13 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light;
         if (effT <= 1.0) {
           prog = paceCurve(h.style, effT);
         } else {
-          const overage = (t - factor) / Math.max(0.001, 1 - factor);
-          prog = 1 + EXTENSION * Math.max(0, Math.min(1, overage)) * 0.95;
+          // Gallop-out: extend past wire by actual finish margin (lengthsBehind)
+          // Linear interpolation from 1.0 at wire-cross to (1 + (fourthLB - h_lb) * LENGTH_TO_PATH) at freeze
+          const myLB = lbByPost ? (lbByPost[h.post] || 0) : 0;
+          const targetExt = Math.max(0, (fourthLB - myLB)) * 0.0014;
+          const span = fourthFinishTime - factor;
+          const u = span > 0.0001 ? Math.min(1, (t - factor) / span) : 1;
+          prog = 1 + Math.min(EXTENSION, targetExt * u);
         }
         // Jockeying noise: subtle smooth oscillation, peaks mid-race, fades at gate/wire
         const n = noiseByPost && noiseByPost[h.post];
