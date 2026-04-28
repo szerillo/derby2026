@@ -500,7 +500,7 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light;
   function paceCurve(style, t) {
     if (style === 'E') return t < 0.7 ? (t/0.7) * 0.76 : 0.76 + ((t-0.7)/0.3) * 0.24;
     if (style === 'EP') return t < 0.6 ? (t/0.6) * 0.64 : 0.64 + ((t-0.6)/0.4) * 0.36;
-    if (style === 'S') return t < 0.5 ? (t/0.5) * 0.40 : 0.40 + ((t-0.5)/0.5) * 0.60;
+    if (style === 'S') return t < 0.5 ? (t/0.5) * 0.45 : 0.45 + ((t-0.5)/0.5) * 0.55;
     return t;
   }
 
@@ -772,8 +772,8 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light;
       }
       // Factor: top 4 derived from lengthsBehind (so gallop-out at racing speed lands at correct lengths past wire)
       // Back of field: smooth convex extension from rank-3 factor to 1.0 (preserves stretch spread)
-      // T_PER_LENGTH is scaled ~3x physical to make 1 length = ~1 horse-width visible on the stylized SVG
-      const T_PER_LENGTH = 0.0036;
+      // T_PER_LENGTH is scaled ~6x physical so finishers separate clearly on the stylized SVG
+      const T_PER_LENGTH = 0.007;
       const baseFactor = 0.87;
       const f3 = baseFactor + sorted[3].lengthsBehind * T_PER_LENGTH;
       sorted.forEach((d, rank) => {
