@@ -1,0 +1,54 @@
+name: Scrape NYRA Bets pool
+
+on:
+  schedule:
+    # Every 5 minutes (GitHub's minimum reliable cron interval).
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-chromium
+
+      - name: Install Playwright + Chromium
+        run: |
+          npm install --no-save playwright@1.48.0
+          npx playwright install --with-deps chromium
+
+      - name: Scrape probables
+        run: node scripts/scrape_pool.js
+
+      - name: Commit if changed
+        run: |
+          git config user.email "actions@users.noreply.github.com"
+          git config user.name "nyra-pool-bot"
+          # Only the timestamp changes if data is identical — strip it for diff comparison
+          if git diff --quiet -- data/derby_pool_payouts.json; then
+            echo "No changes."
+          else
+            # Check if only updated_at changed (no data change worth committing)
+            if git diff -- data/derby_pool_payouts.json | grep -E '^[+-]' | grep -v 'updated_at' | grep -qE '^[+-][^+-]'; then
+              git add data/derby_pool_payouts.json
+              git commit -m "Auto-update pool payouts ($(date -u +%H:%M)Z)"
+              git push
+              echo "Pushed updated payouts."
+            else
+              echo "Only timestamp changed; skipping commit."
+            fi
+          fi
