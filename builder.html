@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<!-- builder.html v1.0 — Wager projection tool. Live exacta from Churchill pool, tri/super extended via Plackett-Luce. -->
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="color-scheme" content="light only" />
+<title>152nd Kentucky Derby — Wager Builder</title>
+<style>
+  :root {
+    color-scheme: light only;
+    --bg: #ffffff;
+    --card: #f6f4f0;
+    --ink: #1a1a1a;
+    --muted: #6b6b6b;
+    --accent: #11c75c;
+    --accent-dark: #0e9a48;
+    --tote: #160E05;
+    --tote-yellow: #FFD400;
+    --border: rgba(0,0,0,0.10);
+    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+  html, body { background: #fff; margin: 0; padding: 0; color: var(--ink); font-family: var(--font-sans); }
+  .frame { max-width: 720px; margin: 0 auto; padding: 12px; box-sizing: border-box; }
+
+  /* Doc header (matches sim.html) */
+  .doc-header { position: relative; background: #000000; color: #fff; padding: 14px 18px; border-radius: 8px 8px 0 0; text-align: center; border-bottom: 3px solid var(--accent); }
+  .doc-title { font-size: 18px; font-weight: 700; margin: 0 0 2px; }
+  .doc-sub { font-size: 11px; opacity: 0.7; margin: 0; }
+  .doc-byline { font-size: 11px; margin-top: 4px; opacity: 0.9; }
+  .doc-byline a { color: var(--accent); text-decoration: none; font-weight: 600; }
+  .action-brand { position: absolute; top: 12px; right: 14px; display: inline-flex; align-items: center; gap: 5px; }
+  .action-brand-text { font-weight: 900; font-size: 14px; color: #fff; }
+  .action-brand-check { width: 16px; height: 16px; border-radius: 50%; background: var(--accent); display: inline-flex; align-items: center; justify-content: center; }
+  .action-brand-check svg { width: 10px; height: 10px; }
+
+  .body { background: var(--card); border-radius: 0 0 8px 8px; padding: 14px; }
+
+  /* Bet-type tabs */
+  .tabs { display: flex; gap: 0; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; background: white; margin-bottom: 14px; }
+  .tabs button { flex: 1; padding: 11px 0; background: transparent; border: none; font-size: 13px; font-weight: 600; color: var(--muted); cursor: pointer; border-right: 1px solid var(--border); }
+  .tabs button:last-child { border-right: none; }
+  .tabs button.active { background: #000; color: var(--tote-yellow); }
+
+  /* Slots */
+  .slots { background: white; border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; margin-bottom: 12px; }
+  .slot { display: grid; grid-template-columns: 50px 1fr 28px; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); min-height: 38px; }
+  .slot:last-child { border-bottom: none; }
+  .slot-label { font-size: 11px; color: var(--muted); letter-spacing: 1.5px; font-weight: 600; }
+  .slot-pick { display: flex; align-items: center; gap: 8px; font-size: 13px; min-height: 28px; }
+  .slot-pick.empty { color: #b0b0b0; font-size: 12px; font-style: italic; }
+  .slot.next .slot-label { color: var(--accent-dark); }
+  .slot.next .slot-pick.empty::before { content: '→ '; color: var(--accent-dark); font-style: normal; font-weight: 700; }
+  .clear { background: transparent; border: none; color: var(--muted); cursor: pointer; font-size: 22px; line-height: 1; padding: 0; width: 28px; height: 28px; border-radius: 50%; }
+  .clear:hover { color: #d33; background: rgba(0,0,0,0.05); }
+  .clear:disabled { opacity: 0.2; cursor: not-allowed; }
+
+  /* Picker grid */
+  .picker { background: white; border: 1px solid var(--border); border-radius: 6px; padding: 12px; }
+  .picker-header { display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--muted); letter-spacing: 1.5px; font-weight: 600; margin-bottom: 10px; }
+  .picker-header .clear-all { background: transparent; border: 1px solid var(--border); border-radius: 4px; padding: 4px 10px; font-size: 10px; letter-spacing: 1px; color: var(--muted); cursor: pointer; }
+  .picker-header .clear-all:hover { color: #d33; border-color: #d33; }
+  .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+
+  .horse-cell {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 4px 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 4px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.08s, border-color 0.08s;
+    min-height: 78px;
+  }
+  .horse-cell:active { transform: scale(0.96); }
+  .horse-cell:hover { border-color: var(--accent); }
+  .horse-cell.placed { opacity: 0.30; cursor: default; pointer-events: none; }
+  .horse-cell.placed:hover { border-color: var(--border); }
+  .saddle {
+    width: 36px; height: 36px; border-radius: 5px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 700;
+    border: 1px solid rgba(0,0,0,0.25);
+  }
+  .horse-name { font-size: 10.5px; line-height: 1.15; text-align: center; color: var(--ink); width: 100%; overflow-wrap: break-word; }
+  .horse-ml { font-size: 9.5px; color: var(--muted); }
+
+  /* Result */
+  .result { background: var(--tote); color: var(--tote-yellow); border-radius: 6px; padding: 14px 16px; text-align: center; margin-top: 14px; }
+  .result-stake-label { font-size: 11px; letter-spacing: 1.5px; opacity: 0.6; }
+  .result-combo { font-size: 14px; margin: 4px 0 6px; letter-spacing: 1.5px; font-variant-numeric: tabular-nums; }
+  .result-pay { font-size: 30px; font-weight: 700; letter-spacing: 1px; font-variant-numeric: tabular-nums; }
+  .result-pay.partial { font-size: 13px; opacity: 0.6; font-weight: 400; letter-spacing: 0.5px; }
+  .result-line2 { font-size: 11px; opacity: 0.65; margin-top: 4px; }
+
+  /* Stake input */
+  .stake-row { display: flex; align-items: center; gap: 8px; justify-content: center; margin-top: 10px; font-size: 12px; }
+  .stake-row label { color: var(--muted); }
+  .stake-row input { width: 80px; padding: 5px 9px; border: 1px solid var(--border); border-radius: 4px; font-size: 13px; text-align: right; font-variant-numeric: tabular-nums; }
+  .stake-presets { display: flex; gap: 4px; margin-left: 6px; }
+  .stake-presets button { padding: 5px 9px; background: white; border: 1px solid var(--border); border-radius: 4px; font-size: 11px; color: var(--muted); cursor: pointer; }
+  .stake-presets button.active { background: #000; color: var(--tote-yellow); border-color: #000; }
+
+  /* Disclaimer + timestamp */
+  .disclaimer-box {
+    background: rgba(245,200,75,0.12);
+    border: 1px solid rgba(245,200,75,0.35);
+    border-radius: 4px;
+    padding: 8px 12px;
+    font-size: 11px;
+    line-height: 1.4;
+    margin-top: 12px;
+    color: #5a4400;
+    text-align: center;
+  }
+  .timestamp { font-size: 10px; color: var(--muted); text-align: center; margin-top: 6px; letter-spacing: 0.5px; }
+
+  /* Mobile tweaks */
+  @media (max-width: 420px) {
+    .frame { padding: 8px; }
+    .doc-title { font-size: 16px; }
+    .grid { gap: 6px; }
+    .horse-cell { padding: 6px 2px 4px; min-height: 72px; }
+    .saddle { width: 32px; height: 32px; font-size: 13px; }
+    .horse-name { font-size: 10px; }
+    .horse-ml { font-size: 9px; }
+    .result-pay { font-size: 26px; }
+  }
+  /* Even narrower — drop to 4 across so cells stay big enough for two-word names */
+  @media (max-width: 360px) {
+    .grid { grid-template-columns: repeat(4, 1fr); }
+  }
+</style>
+</head>
+<body>
+<div class="frame">
+  <div class="doc-header">
+    <div class="doc-title">152nd Kentucky Derby — Wager Builder</div>
+    <div class="doc-sub">Pick your combo, see the projected payout from live Churchill pool data.</div>
+    <div class="doc-byline">By <a href="https://twitter.com/SeanZerillo">@SeanZerillo</a></div>
+    <div class="action-brand">
+      <span class="action-brand-text">ACTION</span>
+      <span class="action-brand-check">
+        <svg viewBox="0 0 12 12" fill="none"><path d="M3 6.5L5 8.5L9 4" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </span>
+    </div>
+  </div>
+
+  <div class="body">
+    <div class="tabs">
+      <button data-bet="EX" class="active">$2 EXACTA</button>
+      <button data-bet="TRI">$1 TRIFECTA</button>
+      <button data-bet="SUPER">$1 SUPERFECTA</button>
+    </div>
+
+    <div class="slots" id="slots"></div>
+
+    <div class="picker">
+      <div class="picker-header">
+        <span>TAP A SADDLE TO ASSIGN</span>
+        <button class="clear-all" id="clearAll">CLEAR ALL</button>
+      </div>
+      <div class="grid" id="grid"></div>
+    </div>
+
+    <div class="result" id="result">
+      <div class="result-stake-label" id="r-stake">$2 EXACTA</div>
+      <div class="result-combo" id="r-combo">— — —</div>
+      <div class="result-pay" id="r-pay">$0.00</div>
+      <div class="result-line2" id="r-line2"></div>
+    </div>
+
+    <div class="stake-row">
+      <label for="stake">Bet</label>
+      <input id="stake" type="number" step="0.50" min="0.50" value="2.00" inputmode="decimal" />
+      <div class="stake-presets">
+        <button data-stake="1">$1</button>
+        <button data-stake="2" class="active">$2</button>
+        <button data-stake="5">$5</button>
+        <button data-stake="10">$10</button>
+      </div>
+    </div>
+
+    <div class="disclaimer-box">
+      Exacta payouts reflect the live Churchill pool. Trifecta and Superfecta are estimated from the same data and are approximate.
+    </div>
+    <div class="timestamp" id="ts">Last odds pull: —</div>
+  </div>
+</div>
+
+<script>
+(function() {
+  const HORSES = [
+    {post:1, name:"Renegade", ml:"4-1", tw:"#E11A1A", nm:"#FFFFFF"},
+    {post:2, name:"Albus", ml:"30-1", tw:"#FFFFFF", nm:"#000000"},
+    {post:3, name:"Intrepido", ml:"50-1", tw:"#1B4FB0", nm:"#FFFFFF"},
+    {post:4, name:"Litmus Test", ml:"50-1", tw:"#F4DA15", nm:"#000000"},
+    {post:5, name:"Right to Party", ml:"30-1", tw:"#1F8A3A", nm:"#FFFFFF"},
+    {post:6, name:"Commandment", ml:"6-1", tw:"#000000", nm:"#FFD400"},
+    {post:7, name:"Danon Bourbon", ml:"20-1", tw:"#F26B1F", nm:"#000000"},
+    {post:8, name:"So Happy", ml:"15-1", tw:"#FFADC8", nm:"#000000"},
+    {post:9, name:"The Puma", ml:"10-1", tw:"#1FD9E8", nm:"#000000"},
+    {post:10, name:"Wonder Dean", ml:"30-1", tw:"#7B1FA2", nm:"#FFFFFF"},
+    {post:11, name:"Incredibolt", ml:"20-1", tw:"#9E9E9E", nm:"#E11A1A"},
+    {post:12, name:"Chief Wallabee", ml:"8-1", tw:"#B6E04C", nm:"#000000"},
+    {post:14, name:"Potente", ml:"20-1", tw:"#6F1010", nm:"#FFD400"},
+    {post:15, name:"Emerging Market", ml:"15-1", tw:"#C9B98A", nm:"#000000"},
+    {post:16, name:"Pavlovian", ml:"30-1", tw:"#6FA8DC", nm:"#F26B1F"},
+    {post:17, name:"Six Speed", ml:"50-1", tw:"#0B1F4D", nm:"#FFFFFF"},
+    {post:18, name:"Further Ado", ml:"6-1", tw:"#0E3F1A", nm:"#FFD400"},
+    {post:19, name:"Golden Tempo", ml:"30-1", tw:"#6F8FAF", nm:"#E11A1A"},
+    {post:21, name:"Great White", ml:"50-1", tw:"#C8B7E0", nm:"#0B1F4D"},
+    {post:22, name:"Ocelli", ml:"50-1", tw:"#1E4D7B", nm:"#FFFFFF"},
+  ];
+  const HORSE_BY_POST = Object.fromEntries(HORSES.map(h => [h.post, h]));
+
+  // Bundled fallback (replaced by live fetch on load)
+  let POOL = {
+    strengths: {"1":0.149,"2":0.0149,"3":0.0112,"4":0.0162,"5":0.0205,"6":0.1407,"7":0.0558,"8":0.0797,"9":0.0839,"10":0.0361,"11":0.0237,"12":0.0861,"14":0.0316,"15":0.0741,"16":0.0102,"17":0.0107,"18":0.1259,"19":0.0204,"21":0.0072,"22":0.0022},
+    ex_factor: 0.834, tri_factor: 0.78, super_factor: 0.75,
+    updated_at: null,
+  };
+  let EXACTA = {};
+
+  // Live fetch
+  fetch('data/derby_pool_payouts.json?t=' + Date.now())
+    .then(r => r.ok ? r.json() : null)
+    .then(d => {
+      if (d && d.strengths && d.exacta_payouts_dollar1) {
+        POOL = { strengths: d.strengths, ex_factor: d.ex_factor || 0.834, tri_factor: d.tri_factor || 0.78, super_factor: d.super_factor || 0.75, updated_at: d.updated_at };
+        EXACTA = d.exacta_payouts_dollar1;
+        updateTimestamp();
+        recalc();
+      }
+    })
+    .catch(e => console.warn('[builder] Pool fetch failed:', e));
+
+  function poolEx1(a, b) { return EXACTA[a + '-' + b] || null; }
+  function poolTri1(a, b, c) {
+    const s = POOL.strengths;
+    const e = poolEx1(a, b);
+    if (!e || !s[a] || !s[b] || !s[c]) return null;
+    const denom = 1 - s[a] - s[b];
+    if (denom <= 0) return null;
+    return e * (denom / s[c]) * (POOL.tri_factor / POOL.ex_factor) - 1;
+  }
+  function poolSup1(a, b, c, d) {
+    const s = POOL.strengths;
+    const e = poolEx1(a, b);
+    if (!e || !s[a] || !s[b] || !s[c] || !s[d]) return null;
+    const d1 = 1 - s[a] - s[b];
+    const d2 = d1 - s[c];
+    if (d1 <= 0 || d2 <= 0) return null;
+    return e * (d1 / s[c]) * (d2 / s[d]) * (POOL.super_factor / POOL.ex_factor) - 1;
+  }
+
+  function fmtMoney(x) { return '$' + x.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+
+  function updateTimestamp() {
+    const ts = document.getElementById('ts');
+    if (POOL.updated_at) {
+      const d = new Date(POOL.updated_at);
+      ts.textContent = 'Last odds pull: ' + d.toLocaleString('en-US', { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
+    } else {
+      ts.textContent = 'Last odds pull: cached fallback';
+    }
+  }
+
+  let bet = 'EX';
+  let picks = [];
+  let stake = 2.00;
+
+  function legCount() { return bet === 'EX' ? 2 : bet === 'TRI' ? 3 : 4; }
+  function legLabels() { return ['1ST', '2ND', '3RD', '4TH'].slice(0, legCount()); }
+  function baseStake() { return bet === 'EX' ? 2 : 1; }
+
+  function renderSlots() {
+    const el = document.getElementById('slots');
+    el.innerHTML = '';
+    legLabels().forEach((label, i) => {
+      const post = picks[i];
+      const isNext = post == null && (i === picks.length);
+      const horse = post != null ? HORSE_BY_POST[post] : null;
+      const row = document.createElement('div');
+      row.className = 'slot' + (isNext ? ' next' : '');
+      row.innerHTML = `
+        <div class="slot-label">${label}</div>
+        <div class="slot-pick ${post == null ? 'empty' : ''}">
+          ${post != null
+            ? `<span class="saddle" style="background:${horse.tw};color:${horse.nm};">${horse.post}</span>${horse.name}`
+            : (isNext ? 'tap a saddle' : 'empty')}
+        </div>
+        <button class="clear" data-clear="${i}" ${post == null ? 'disabled' : ''}>×</button>
+      `;
+      el.appendChild(row);
+    });
+  }
+
+  function renderGrid() {
+    const el = document.getElementById('grid');
+    el.innerHTML = HORSES.map(h => {
+      const placed = picks.includes(h.post);
+      return `<div class="horse-cell ${placed ? 'placed' : ''}" data-post="${h.post}">
+        <span class="saddle" style="background:${h.tw};color:${h.nm};">${h.post}</span>
+        <div class="horse-name">${h.name}</div>
+        <div class="horse-ml">${h.ml}</div>
+      </div>`;
+    }).join('');
+  }
+
+  function renderTabs() {
+    document.querySelectorAll('[data-bet]').forEach(b => b.classList.toggle('active', b.dataset.bet === bet));
+  }
+
+  function renderStakePresets() {
+    document.querySelectorAll('[data-stake]').forEach(b => {
+      b.classList.toggle('active', String(parseFloat(b.dataset.stake)) === String(stake));
+    });
+  }
+
+  function recalc() {
+    const r_stake = document.getElementById('r-stake');
+    const r_combo = document.getElementById('r-combo');
+    const r_pay = document.getElementById('r-pay');
+    const r_line2 = document.getElementById('r-line2');
+
+    r_stake.textContent = `$${stake.toFixed(2)} ${bet === 'EX' ? 'EXACTA' : bet === 'TRI' ? 'TRIFECTA' : 'SUPERFECTA'}`;
+
+    const need = legCount();
+    if (picks.length < need) {
+      r_combo.textContent = legLabels().map((_, i) => picks[i] != null ? picks[i] : '—').join('  ·  ');
+      r_pay.textContent = `Pick ${need - picks.length} more`;
+      r_pay.className = 'result-pay partial';
+      r_line2.textContent = '';
+      return;
+    }
+
+    let pay1 = null;
+    if (bet === 'EX') pay1 = poolEx1(picks[0], picks[1]);
+    else if (bet === 'TRI') pay1 = poolTri1(picks[0], picks[1], picks[2]);
+    else pay1 = poolSup1(picks[0], picks[1], picks[2], picks[3]);
+
+    r_combo.textContent = picks.join('  ·  ');
+    if (pay1 == null) {
+      r_pay.textContent = 'Combo not in pool';
+      r_pay.className = 'result-pay partial';
+      r_line2.textContent = '';
+    } else {
+      const totalPay = pay1 * (stake / baseStake());
+      r_pay.textContent = fmtMoney(totalPay);
+      r_pay.className = 'result-pay';
+      const baseStr = bet === 'EX' ? '$2 base' : '$1 base';
+      r_line2.textContent = `${baseStr} pays ${fmtMoney(pay1)}`;
+    }
+  }
+
+  function render() {
+    renderTabs();
+    renderSlots();
+    renderGrid();
+    renderStakePresets();
+    recalc();
+  }
+
+  // Events
+  document.addEventListener('click', (e) => {
+    const tabBtn = e.target.closest('[data-bet]');
+    const cellBtn = e.target.closest('.horse-cell:not(.placed)');
+    const clearBtn = e.target.closest('[data-clear]');
+    const stakeBtn = e.target.closest('[data-stake]');
+    const clearAllBtn = e.target.closest('#clearAll');
+
+    if (tabBtn) {
+      bet = tabBtn.dataset.bet;
+      if (picks.length > legCount()) picks = picks.slice(0, legCount());
+      // Default stake: $2 for EX, $1 for TRI/SUPER
+      stake = baseStake();
+      document.getElementById('stake').value = stake.toFixed(2);
+      render();
+    } else if (cellBtn) {
+      const post = parseInt(cellBtn.dataset.post);
+      if (picks.length < legCount() && !picks.includes(post)) {
+        picks.push(post);
+        render();
+      }
+    } else if (clearBtn) {
+      const i = parseInt(clearBtn.dataset.clear);
+      picks.splice(i, 1);
+      render();
+    } else if (stakeBtn) {
+      stake = parseFloat(stakeBtn.dataset.stake);
+      document.getElementById('stake').value = stake.toFixed(2);
+      render();
+    } else if (clearAllBtn) {
+      picks = [];
+      render();
+    }
+  });
+
+  document.getElementById('stake').addEventListener('input', (e) => {
+    const v = parseFloat(e.target.value);
+    if (!isNaN(v) && v > 0) {
+      stake = v;
+      renderStakePresets();
+      recalc();
+    }
+  });
+
+  // Init
+  updateTimestamp();
+  render();
+})();
+</script>
+</body>
+</html>
