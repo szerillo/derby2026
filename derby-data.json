@@ -1,0 +1,53 @@
+{
+  "race": {
+    "name": "Kentucky Derby",
+    "year": 2026,
+    "venue": "Churchill Downs",
+    "distance": "1 1/4 miles",
+    "surface": "dirt"
+  },
+  "field": [
+    { "post": 1,  "name": "Renegade",         "ml": "4-1",  "ml_decimal": 4,  "ml_prob": 0.2000 },
+    { "post": 2,  "name": "Albus",            "ml": "30-1", "ml_decimal": 30, "ml_prob": 0.0323 },
+    { "post": 3,  "name": "Intrepido",        "ml": "50-1", "ml_decimal": 50, "ml_prob": 0.0196 },
+    { "post": 4,  "name": "Litmus Test",      "ml": "50-1", "ml_decimal": 50, "ml_prob": 0.0196 },
+    { "post": 5,  "name": "Right to Party",   "ml": "30-1", "ml_decimal": 30, "ml_prob": 0.0323 },
+    { "post": 6,  "name": "Commandment",      "ml": "6-1",  "ml_decimal": 6,  "ml_prob": 0.1429 },
+    { "post": 7,  "name": "Danon Bourbon",    "ml": "20-1", "ml_decimal": 20, "ml_prob": 0.0476 },
+    { "post": 8,  "name": "So Happy",         "ml": "15-1", "ml_decimal": 15, "ml_prob": 0.0625 },
+    { "post": 9,  "name": "The Puma",         "ml": "10-1", "ml_decimal": 10, "ml_prob": 0.0909 },
+    { "post": 10, "name": "Wonder Dean (Jpn)", "ml": "30-1", "ml_decimal": 30, "ml_prob": 0.0323 },
+    { "post": 11, "name": "Incredibolt",      "ml": "20-1", "ml_decimal": 20, "ml_prob": 0.0476 },
+    { "post": 12, "name": "Chief Wallabee",   "ml": "8-1",  "ml_decimal": 8,  "ml_prob": 0.1111 },
+    { "post": 14, "name": "Potente",          "ml": "20-1", "ml_decimal": 20, "ml_prob": 0.0476 },
+    { "post": 15, "name": "Emerging Market",  "ml": "15-1", "ml_decimal": 15, "ml_prob": 0.0625 },
+    { "post": 16, "name": "Pavlovian",        "ml": "30-1", "ml_decimal": 30, "ml_prob": 0.0323 },
+    { "post": 17, "name": "Six Speed",        "ml": "50-1", "ml_decimal": 50, "ml_prob": 0.0196 },
+    { "post": 18, "name": "Further Ado",      "ml": "6-1",  "ml_decimal": 6,  "ml_prob": 0.1429 },
+    { "post": 19, "name": "Golden Tempo",     "ml": "30-1", "ml_decimal": 30, "ml_prob": 0.0323 },
+    { "post": 21, "name": "Great White",      "ml": "50-1", "ml_decimal": 50, "ml_prob": 0.0196 },
+    { "post": 22, "name": "Ocelli",           "ml": "50-1", "ml_decimal": 50, "ml_prob": 0.0196 }
+  ],
+  "saddle_cloth_palette": [
+    { "post": 1,  "towel": "#E11A1A", "number": "#FFFFFF", "label": "red" },
+    { "post": 2,  "towel": "#FFFFFF", "number": "#000000", "label": "white" },
+    { "post": 3,  "towel": "#1B4FB0", "number": "#FFFFFF", "label": "blue" },
+    { "post": 4,  "towel": "#F4DA15", "number": "#000000", "label": "yellow" },
+    { "post": 5,  "towel": "#1F8A3A", "number": "#FFFFFF", "label": "green" },
+    { "post": 6,  "towel": "#000000", "number": "#FFD400", "label": "black" },
+    { "post": 7,  "towel": "#F26B1F", "number": "#000000", "label": "orange" },
+    { "post": 8,  "towel": "#FFADC8", "number": "#000000", "label": "pink" },
+    { "post": 9,  "towel": "#1FD9E8", "number": "#000000", "label": "turquoise" },
+    { "post": 10, "towel": "#7B1FA2", "number": "#FFFFFF", "label": "purple" },
+    { "post": 11, "towel": "#9E9E9E", "number": "#E11A1A", "label": "grey" },
+    { "post": 12, "towel": "#B6E04C", "number": "#000000", "label": "lime" },
+    { "post": 14, "towel": "#6F1010", "number": "#FFD400", "label": "maroon" },
+    { "post": 15, "towel": "#C9B98A", "number": "#000000", "label": "khaki" },
+    { "post": 16, "towel": "#6FA8DC", "number": "#F26B1F", "label": "copen blue" },
+    { "post": 17, "towel": "#0B1F4D", "number": "#FFFFFF", "label": "navy" },
+    { "post": 18, "towel": "#0E3F1A", "number": "#FFD400", "label": "forest green" },
+    { "post": 19, "towel": "#6F8FAF", "number": "#E11A1A", "label": "moonstone" },
+    { "post": 21, "towel": "#C8B7E0", "number": "#0B1F4D", "label": "lavender" },
+    { "post": 22, "towel": "#1E4D7B", "number": "#FFFFFF", "label": "postal blue" }
+  ]
+}
