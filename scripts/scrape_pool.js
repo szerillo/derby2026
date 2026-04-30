@@ -160,7 +160,9 @@ async function main() {
   };
 
   fs.mkdirSync(path.dirname(OUT_PATH), { recursive: true });
-  fs.writeFileSync(OUT_PATH, JSON.stringify(out));
+  // Pretty-print so the workflow's "only timestamp changed" diff check works
+  // (each top-level field on its own line — required for grep -v 'updated_at' to be meaningful).
+  fs.writeFileSync(OUT_PATH, JSON.stringify(out, null, 2));
   console.log(
     `Wrote ${OUT_PATH}: ${Object.keys(fieldExacta).length} pairs, ex_factor=${out.ex_factor}`
   );
