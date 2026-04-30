@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- sim.html v3.12 - 22-saddle field (Silent Tactic + Fulleffort scratched, Great White + Ocelli AE drew in), blended probabilities -->
+<!-- sim.html v3.13 - 22-saddle field, blended probabilities, ?sim=N + ?pace=X URL deep-link -->
 <html lang="en">
 <head>
 <meta charset="utf-8" />
@@ -151,7 +151,7 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light;
 .tb-rest-item { display: inline-flex; align-items: center; gap: 4px; }
 .tb-rest-pos { font-size: 10px; color: rgba(245,200,75,0.55); font-variant-numeric: tabular-nums; }
 .tb-rest-silk { display: inline-block; width: 20px; height: 20px; border-radius: 3px; text-align: center; line-height: 20px; font-size: 10px; font-weight: 500; border: 0.5px solid rgba(0,0,0,0.4); cursor: help; }
-.tb-disclaimer { font-size: 9px; color: rgba(245,200,75,0.55); margin-top: 12px; padding-top: 8px; border-top: 0.5px solid rgba(245,200,75,0.12); font-style: italic; text-align: center; line-height: 1.4; }
+.tb-disclaimer { font-size: 11px; color: rgba(245,200,75,0.85); margin: 10px 0 4px; padding: 8px 14px; background: rgba(245,200,75,0.06); border: 0.5px solid rgba(245,200,75,0.22); border-radius: 4px; text-align: center; line-height: 1.45; letter-spacing: 0.2px; }
 .tb-meta { font-size: 9px; color: rgba(245,200,75,0.4); margin-top: 6px; letter-spacing: 0.5px; text-align: center; }
 
 @media (max-width: 600px) {
@@ -187,7 +187,7 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light;
   .tb-exotic-lbl { font-size: 8px; letter-spacing: 0.5px; }
   .tb-exotic-combo { font-size: 11px; }
   .tb-exotic-pay { font-size: 12px; }
-  .tb-disclaimer { font-size: 8px; line-height: 1.35; }
+  .tb-disclaimer { font-size: 10px; line-height: 1.4; padding: 6px 10px; }
   .tb-meta { font-size: 8px; }
 }
 
@@ -229,7 +229,7 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light;
 
 <script>
 (function() {
-  console.log('[Derby sim] v3.12 loaded - 22-saddle field, blended probabilities');
+  console.log('[Derby sim] v3.13 loaded - 22-saddle field, blended probabilities, deep-link support');
   // v3.12 — Field updated for Silent Tactic (#13) + Fulleffort (#20) scratches.
   // Great White (#21) and Ocelli (#22) drew in as AEs; saddle towels keep their numbers (skip 13 + 20).
   // simWin / boardPct = blended (model + expert panel) probabilities.
@@ -751,11 +751,24 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light;
       lockedCalls = lastSimState.lockedCalls;
     } else {
       // v3.4: Pick a random sim from the 10K database, update counter IMMEDIATELY
-      currentSimIdx = Math.floor(Math.random() * SIMS_DATA.sims.length);
+      // v3.13: Honor ?sim=N URL param (1-indexed for human friendliness) for deep-linking,
+      //        and ?pace=fast|honest|slow to force a specific pace shape.
+      //        The forced sim/pace only applies on the FIRST play; "NEW SIM" goes random again.
+      const _qp = new URLSearchParams(window.location.search);
+      const _forcedSim = (_qp.get('sim') !== null && !window._sim_used_url) ? parseInt(_qp.get('sim'), 10) - 1 : null;
+      const _forcedPace = (_qp.get('pace') && !window._sim_used_url) ? _qp.get('pace') : null;
+      window._sim_used_url = true;
+      if (_forcedSim !== null && _forcedSim >= 0 && _forcedSim < SIMS_DATA.sims.length) {
+        currentSimIdx = _forcedSim;
+      } else {
+        currentSimIdx = Math.floor(Math.random() * SIMS_DATA.sims.length);
+      }
       const _ctr = document.getElementById('sim-counter');
       if (_ctr) _ctr.textContent = 'SIM ' + (currentSimIdx + 1).toLocaleString() + ' / ' + SIMS_DATA.sims.length.toLocaleString();
       const lockedFinish = SIMS_DATA.sims[currentSimIdx];
-      paceShape = samplePaceShape();
+      paceShape = (_forcedPace === 'fast' || _forcedPace === 'honest' || _forcedPace === 'slow')
+                    ? _forcedPace
+                    : samplePaceShape();
       sorted = lockedFinish.map((post, rank) => {
         const h = horseByPost[post];
         // Generate trip narrative from style+post (for storytelling, not finish order)
@@ -913,12 +926,53 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light;
   function fmtMoney(x) { return '$' + x.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
   function fmtOdds(ml) { return ml.replace('-', '/'); }
 
+  // v3.13 — Pool-anchored exotic payouts.
+  // POOL_DATA holds live $1 exacta payouts + horse strengths (Plackett-Luce parameters
+  // backed out of the live exacta pool). $2 EX is direct lookup; $1 TRI extends the
+  // exacta with a third leg via PL conditional probability; $1 SUPER adds a fourth.
+  // TRI_FACTOR / SUPER_FACTOR adjust for the deeper takeout on those pools (~22% / ~25%).
+  const POOL_DATA = {"strengths":{"1":0.149,"2":0.0149,"3":0.0112,"4":0.0162,"5":0.0205,"6":0.1407,"7":0.0558,"8":0.0797,"9":0.0839,"10":0.0361,"11":0.0237,"12":0.0861,"14":0.0316,"15":0.0741,"16":0.0102,"17":0.0107,"18":0.1259,"19":0.0204,"21":0.0072,"22":0.0022},"ex_factor":0.834,"tri_factor":0.78,"super_factor":0.75};
+  const POOL_EXACTA = {"1-2":285,"1-3":332,"1-4":231,"1-5":238,"1-6":31,"1-7":97,"1-8":64,"1-9":58,"1-10":113,"1-11":229,"1-12":79,"1-14":188,"1-15":80,"1-16":531,"1-17":655,"1-18":42,"1-19":208,"1-21":615,"1-22":1610,"2-1":394,"2-3":919,"2-4":963,"2-5":771,"2-6":634,"2-7":811,"2-8":647,"2-9":991,"2-10":1407,"2-11":732,"2-12":856,"2-14":2720,"2-15":1585,"2-16":4681,"2-17":3947,"2-18":936,"2-19":3050,"2-21":6291,"2-22":18302,"3-1":499,"3-2":1037,"3-4":1242,"3-5":902,"3-6":1027,"3-7":1048,"3-8":783,"3-9":1274,"3-10":2212,"3-11":2396,"3-12":1813,"3-14":2396,"3-15":2287,"3-16":2648,"3-17":4376,"3-18":1157,"3-19":2720,"3-21":8052,"3-22":10595,"4-1":317,"4-2":1027,"4-3":1266,"4-5":1137,"4-6":472,"4-7":849,"4-8":759,"4-9":991,"4-10":1037,"4-11":2455,"4-12":1150,"4-14":671,"4-15":1398,"4-16":2835,"4-17":3871,"4-18":765,"4-19":2876,"4-21":4793,"4-22":14380,"5-1":324,"5-2":447,"5-3":706,"5-4":1094,"5-6":400,"5-7":631,"5-8":330,"5-9":737,"5-10":811,"5-11":1585,"5-12":726,"5-14":2141,"5-15":1043,"5-16":3595,"5-17":2425,"5-18":645,"5-19":2340,"5-21":3097,"5-22":9586,"6-1":32,"6-2":548,"6-3":583,"6-4":421,"6-5":341,"6-7":118,"6-8":73,"6-9":49,"6-10":219,"6-11":243,"6-12":59,"6-14":202,"6-15":71,"6-16":635,"6-17":512,"6-18":35,"6-19":237,"6-21":1082,"6-22":2455,"7-1":101,"7-2":745,"7-3":831,"7-4":748,"7-5":592,"7-6":136,"7-8":159,"7-9":189,"7-10":129,"7-11":406,"7-12":258,"7-14":494,"7-15":192,"7-16":1290,"7-17":835,"7-18":189,"7-19":562,"7-21":2075,"7-22":6710,"8-1":62,"8-2":559,"8-3":621,"8-4":597,"8-5":319,"8-6":80,"8-7":161,"8-9":102,"8-10":302,"8-11":408,"8-12":146,"8-14":269,"8-15":169,"8-16":737,"8-17":845,"8-18":83,"8-19":464,"8-21":963,"8-22":3412,"9-1":69,"9-2":875,"9-3":919,"9-4":875,"9-5":645,"9-6":54,"9-7":193,"9-8":106,"9-10":283,"9-11":449,"9-12":86,"9-14":393,"9-15":141,"9-16":886,"9-17":977,"9-18":72,"9-19":500,"9-21":1548,"9-22":3798,"10-1":120,"10-2":1427,"10-3":2054,"10-4":1032,"10-5":864,"10-6":258,"10-7":136,"10-8":341,"10-9":318,"10-11":967,"10-12":369,"10-14":849,"10-15":412,"10-16":1899,"10-17":842,"10-18":346,"10-19":1398,"10-21":2796,"10-22":3660,"11-1":282,"11-2":745,"11-3":2287,"11-4":1448,"11-5":1438,"11-6":309,"11-7":462,"11-8":464,"11-9":478,"11-10":936,"11-12":362,"11-14":1274,"11-15":449,"11-16":2368,"11-17":3195,"11-18":386,"11-19":1502,"11-21":5162,"11-22":11184,"12-1":83,"12-2":696,"12-3":982,"12-4":808,"12-5":559,"12-6":62,"12-7":233,"12-8":146,"12-9":81,"12-10":310,"12-11":298,"12-14":290,"12-15":115,"12-16":954,"12-17":751,"12-18":55,"12-19":415,"12-21":1360,"12-22":2757,"14-1":208,"14-2":2314,"14-3":1650,"14-4":538,"14-5":1691,"14-6":259,"14-7":599,"14-8":298,"14-9":394,"14-10":780,"14-11":1112,"14-12":353,"14-15":326,"14-16":1438,"14-17":1088,"14-18":206,"14-19":915,"14-21":2835,"14-22":4910,"15-1":84,"15-2":1016,"15-3":1177,"15-4":864,"15-5":754,"15-6":81,"15-7":183,"15-8":157,"15-9":135,"15-10":360,"15-11":439,"15-12":114,"15-14":262,"15-16":527,"15-17":1118,"15-18":77,"15-19":360,"15-21":1398,"15-22":2757,"16-1":821,"16-2":4910,"16-3":3097,"16-4":2757,"16-5":3660,"16-6":949,"16-7":2164,"16-8":954,"16-9":1220,"16-10":2141,"16-11":2614,"16-12":1536,"16-14":1973,"16-15":805,"16-17":3471,"16-18":707,"16-19":1864,"16-21":3798,"16-22":20132,"17-1":805,"17-2":4108,"17-3":4376,"17-4":4026,"17-5":2757,"17-6":831,"17-7":923,"17-8":1137,"17-9":1082,"17-10":815,"17-11":3247,"17-12":936,"17-14":1781,"17-15":1369,"17-16":3471,"17-18":958,"17-19":2033,"17-21":5921,"17-22":16776,"18-1":41,"18-2":742,"18-3":825,"18-4":550,"18-5":524,"18-6":37,"18-7":189,"18-8":77,"18-9":64,"18-10":290,"18-11":304,"18-12":52,"18-14":175,"18-15":70,"18-16":489,"18-17":811,"18-19":307,"18-21":1043,"18-22":3004,"19-1":268,"19-2":3247,"19-3":2396,"19-4":2340,"19-5":2141,"19-6":338,"19-7":754,"19-8":544,"19-9":623,"19-10":1388,"19-11":1407,"19-12":608,"19-14":1082,"19-15":477,"19-16":1813,"19-17":1899,"19-18":422,"19-21":2340,"19-22":6100,"21-1":808,"21-2":6291,"21-3":9586,"21-4":4681,"21-5":3660,"21-6":1333,"21-7":2581,"21-8":1198,"21-9":1919,"21-10":2548,"21-11":6710,"21-12":2581,"21-14":4376,"21-15":2097,"21-16":3531,"21-17":5033,"21-18":1324,"21-19":2720,"21-22":7456,"22-1":3195,"22-2":28760,"22-3":11842,"22-4":16776,"22-5":20132,"22-6":3595,"22-7":11184,"22-8":8753,"22-9":6710,"22-10":3531,"22-11":25165,"22-12":11184,"22-14":16776,"22-15":10066,"22-16":22369,"22-17":20132,"22-18":5033,"22-19":9151,"22-21":7456};
+  function poolExacta1(a, b) {
+    // Returns $1 exacta payout (winnings on $1 stake) for A→B, or null if not in pool.
+    return POOL_EXACTA[a + '-' + b] || null;
+  }
+  function poolTrifecta1(a, b, c) {
+    // Anchor on live $1 exacta A→B, then extend via PL: P(C 3rd | A,B out) = s_C / (1 - s_A - s_B)
+    const s = POOL_DATA.strengths;
+    const ex1 = poolExacta1(a, b);
+    if (!ex1 || !s[a] || !s[b] || !s[c]) return null;
+    const denom = 1 - s[a] - s[b];
+    if (denom <= 0) return null;
+    const leg3Factor = denom / s[c];
+    const takeoutAdj = POOL_DATA.tri_factor / POOL_DATA.ex_factor;
+    return ex1 * leg3Factor * takeoutAdj - 1;
+  }
+  function poolSuperfecta1(a, b, c, d) {
+    const s = POOL_DATA.strengths;
+    const ex1 = poolExacta1(a, b);
+    if (!ex1 || !s[a] || !s[b] || !s[c] || !s[d]) return null;
+    const denom1 = 1 - s[a] - s[b];
+    const denom2 = denom1 - s[c];
+    if (denom1 <= 0 || denom2 <= 0) return null;
+    const leg3 = denom1 / s[c];
+    const leg4 = denom2 / s[d];
+    const takeoutAdj = POOL_DATA.super_factor / POOL_DATA.ex_factor;
+    return ex1 * leg3 * leg4 * takeoutAdj - 1;
+  }
+
   function swapToToteboard(finishOrder, paceShape) {
     const w = finishOrder[0], s = finishOrder[1], t = finishOrder[2], f = finishOrder[3];
     const wD = w.ml_dec + 1, sD = s.ml_dec + 1, tD = t.ml_dec + 1, fD = f.ml_dec + 1;
     const winPay = wD*2.0, winPlace = wD*1.05+1.5, winShow = wD*0.65+1.5;
     const sPlace = sD*0.55+1.0, sShow = sD*0.40+1.0, tShow = tD*0.45+1.0;
-    const exacta = wD*sD*1.7, trifecta = wD*sD*tD*1.0, superfecta = wD*sD*tD*fD*0.55;
+    // Pool-anchored exotic payouts (live data); fall back to ML-derived if combo isn't in pool.
+    const ex1 = poolExacta1(w.post, s.post);
+    const tri1 = poolTrifecta1(w.post, s.post, t.post);
+    const sup1 = poolSuperfecta1(w.post, s.post, t.post, f.post);
+    const exacta     = ex1  != null ? ex1 * 2          : wD*sD*1.7;
+    const trifecta   = tri1 != null ? tri1             : wD*sD*tD*1.0;
+    const superfecta = sup1 != null ? sup1             : wD*sD*tD*fD*0.55;
     const finalTime = `2:0${Math.floor(Math.random()*4)}.${(Math.floor(Math.random()*100)).toString().padStart(2,'0')}`;
     const silk = h => `<span class="tb-silk" data-post="${h.post}" style="background:${h.tw};color:${h.nm};">${h.post}</span>`;
     const restSilk = h => `<span class="tb-rest-silk" data-post="${h.post}" style="background:${h.tw};color:${h.nm};">${h.post}</span>`;
@@ -947,8 +1001,8 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light;
           <div class="tb-exotic"><div class="tb-exotic-lbl">$1.00 TRIFECTA</div><div class="tb-exotic-combo">${w.post}-${s.post}-${t.post}</div><div class="tb-exotic-pay">${fmtMoney(trifecta)}</div></div>
           <div class="tb-exotic"><div class="tb-exotic-lbl">$1.00 SUPERFECTA</div><div class="tb-exotic-combo">${w.post}-${s.post}-${t.post}-${f.post}</div><div class="tb-exotic-pay">${fmtMoney(superfecta)}</div></div>
         </div>
+        <div class="tb-disclaimer">Exacta payouts reflect the live Churchill pool. Trifecta and Superfecta are estimated from the same data and are approximate.</div>
         <div class="tb-rest"><span class="tb-rest-lbl">FULL ORDER&nbsp;</span>${restHtml}</div>
-        <div class="tb-disclaimer">Approximate payouts modeled from Morning Line odds &amp; 30 years of Derby board finishers</div>
         <div class="tb-meta">SIM ${(currentSimIdx + 1).toLocaleString()} / ${SIMS_DATA.sims.length.toLocaleString()}</div>
       </div>
     `;
