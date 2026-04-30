@@ -11,23 +11,29 @@ By [@SeanZerillo](https://twitter.com/SeanZerillo)
 | Index page | https://szerillo.github.io/derby2026/ |
 | Data table widget | https://szerillo.github.io/derby2026/table.html |
 | Race simulator widget | https://szerillo.github.io/derby2026/sim.html |
+| Wager builder widget | https://szerillo.github.io/derby2026/builder.html |
 
 ## Repo structure
 
 ```
 .
-├── index.html              landing page listing both widgets
+├── index.html              landing page listing all widgets
 ├── table.html              embeddable data table (probabilities, fair odds, edges)
 ├── sim.html                embeddable race simulator (animation, calls, toteboard)
+├── builder.html            embeddable wager builder (live exacta/tri/super payouts)
 ├── README.md               this file
 ├── METHODOLOGY.md           model overview (high level)
 ├── HOW_IT_WORKS.md         plain-English explainer
 ├── data/
-│   ├── derby-data.json     canonical 20-horse field roster + saddle cloth palette
-│   └── derby_sims.json     10,000 pre-computed sim results + per-horse stats
-└── scripts/
-    ├── derby_sim.py        Monte Carlo simulator
-    └── build_table_widget.py  generator for table.html
+│   ├── derby-data.json          canonical 20-horse field roster + saddle cloth palette
+│   ├── derby_sims.json          10,000 pre-computed sim results + per-horse stats
+│   └── derby_pool_payouts.json  live Churchill exacta pool snapshot (auto-updated every 5 min)
+├── scripts/
+│   ├── derby_sim.py             Monte Carlo simulator
+│   ├── build_table_widget.py    generator for table.html
+│   └── scrape_pool.js           NYRA Bets pool scraper (run by GitHub Action)
+└── .github/workflows/
+    └── scrape-pool.yml          cron that updates derby_pool_payouts.json every 5 min
 ```
 
 ## WordPress embed snippets
@@ -55,6 +61,20 @@ Paste into a Custom HTML block:
   style="border:0; max-width:1200px; display:block; margin:0 auto;"
   loading="lazy"
   title="Kentucky Derby 2026 Race Simulator"
+></iframe>
+```
+
+### Wager builder widget
+
+Lets readers pick their own Exacta / Trifecta / Superfecta combination and see the projected payout pulled live from the Churchill exacta pool. Refreshes automatically every 5 minutes.
+
+```html
+<iframe
+  src="https://szerillo.github.io/derby2026/builder.html"
+  width="100%" height="780" frameborder="0"
+  style="border:0; max-width:720px; display:block; margin:0 auto;"
+  loading="lazy"
+  title="Kentucky Derby 2026 Wager Builder"
 ></iframe>
 ```
 
