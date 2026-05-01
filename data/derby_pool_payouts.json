@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-05-01T11:41:33.528Z",
+  "updated_at": "2026-05-01T15:18:30.550Z",
   "race_id": 102081587,
   "field": [
     1,
@@ -26,32 +26,32 @@
   "pool_totals": {
     "WN": {
       "type": "WIN",
-      "gross": 1430780,
-      "net": 1158712,
+      "gross": 1719772,
+      "net": 1350380,
       "status": 1
     },
     "PL": {
       "type": "PLACE",
-      "gross": 302773,
-      "net": 245011,
+      "gross": 368397,
+      "net": 288907,
       "status": 1
     },
     "SH": {
       "type": "SHOW",
-      "gross": 272676,
-      "net": 220033,
+      "gross": 329309,
+      "net": 255226,
       "status": 1
     },
     "EX": {
       "type": "EXACTA",
-      "gross": 572079,
-      "net": 428576,
+      "gross": 702257,
+      "net": 506831,
       "status": 1
     },
     "DB": {
       "type": "DOUBLE",
-      "gross": 3679,
-      "net": 2860,
+      "gross": 4462,
+      "net": 3355,
       "status": 1
     }
   },
