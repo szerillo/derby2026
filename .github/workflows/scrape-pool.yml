@@ -23,22 +23,18 @@ jobs:
       - name: Scrape probables
         run: node scripts/scrape_pool.js
 
-      - name: Commit if data changed
+      - name: Commit refreshed payouts
         run: |
           git config user.email "actions@users.noreply.github.com"
           git config user.name "nyra-pool-bot"
-          # If only the timestamp changed, skip commit. Compare ignoring the updated_at line.
+          # Always commit on a successful scrape — the JSON now includes pool_totals which
+          # reliably grows every run (bets coming in), so the file is genuinely fresh even
+          # when NYRA's per-combo probables haven't refreshed yet.
           if git diff --quiet -- data/derby_pool_payouts.json; then
-            echo "No changes to commit."
+            echo "No diff (script may have failed silently). Skipping."
             exit 0
           fi
-          changed_lines=$(git diff -- data/derby_pool_payouts.json | grep -E '^[+-][^+-]' | grep -v 'updated_at' | wc -l)
-          if [ "$changed_lines" -eq 0 ]; then
-            echo "Only timestamp changed; skipping commit."
-            git checkout -- data/derby_pool_payouts.json
-          else
-            git add data/derby_pool_payouts.json
-            git commit -m "Auto-update pool payouts ($(date -u +%H:%M)Z)"
-            git push
-            echo "Pushed updated payouts."
-          fi
+          git add data/derby_pool_payouts.json
+          git commit -m "Auto-update pool payouts ($(date -u +%H:%M)Z)"
+          git push
+          echo "Pushed."
