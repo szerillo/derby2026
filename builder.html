@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- builder.html v1.0 — Wager projection tool. Live exacta from Churchill pool, tri/super extended via Plackett-Luce. -->
+<!-- builder.html v1.1 — Right to Party scratched + Robusta in (#23). Live exacta from Churchill pool, tri/super extended via Plackett-Luce. -->
 <html lang="en">
 <head>
 <meta charset="utf-8" />
@@ -207,7 +207,6 @@
     {post:2, name:"Albus", ml:"30-1", tw:"#FFFFFF", nm:"#000000"},
     {post:3, name:"Intrepido", ml:"50-1", tw:"#1B4FB0", nm:"#FFFFFF"},
     {post:4, name:"Litmus Test", ml:"50-1", tw:"#F4DA15", nm:"#000000"},
-    {post:5, name:"Right to Party", ml:"30-1", tw:"#1F8A3A", nm:"#FFFFFF"},
     {post:6, name:"Commandment", ml:"6-1", tw:"#000000", nm:"#FFD400"},
     {post:7, name:"Danon Bourbon", ml:"20-1", tw:"#F26B1F", nm:"#000000"},
     {post:8, name:"So Happy", ml:"15-1", tw:"#FFADC8", nm:"#000000"},
@@ -223,12 +222,13 @@
     {post:19, name:"Golden Tempo", ml:"30-1", tw:"#6F8FAF", nm:"#E11A1A"},
     {post:21, name:"Great White", ml:"50-1", tw:"#C8B7E0", nm:"#0B1F4D"},
     {post:22, name:"Ocelli", ml:"50-1", tw:"#1E4D7B", nm:"#FFFFFF"},
+    {post:23, name:"Robusta", ml:"50-1", tw:"#A8D5BA", nm:"#0E3F1A"},
   ];
   const HORSE_BY_POST = Object.fromEntries(HORSES.map(h => [h.post, h]));
 
   // Bundled fallback (replaced by live fetch on load)
   let POOL = {
-    strengths: {"1":0.149,"2":0.0149,"3":0.0112,"4":0.0162,"5":0.0205,"6":0.1407,"7":0.0558,"8":0.0797,"9":0.0839,"10":0.0361,"11":0.0237,"12":0.0861,"14":0.0316,"15":0.0741,"16":0.0102,"17":0.0107,"18":0.1259,"19":0.0204,"21":0.0072,"22":0.0022},
+    strengths: {"1":0.1129,"2":0.0080,"3":0.0010,"4":0.0010,"6":0.1493,"7":0.0170,"8":0.0461,"9":0.0989,"10":0.0270,"11":0.0110,"12":0.2181,"14":0.0400,"15":0.0350,"16":0.0030,"17":0.0050,"18":0.2311,"19":0.0020,"21":0.0010,"22":0.0010,"23":0.0010},
     ex_factor: 0.834, tri_factor: 0.78, super_factor: 0.75,
     updated_at: null,
   };
