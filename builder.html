@@ -351,11 +351,12 @@
       r_pay.className = 'result-pay partial';
       r_line2.textContent = '';
     } else {
-      const totalPay = pay1 * (stake / baseStake());
+      // pay1 is the per-$1 payout (NYRA quotes all probables in $1 units, even though
+      // a "standard" Exacta ticket is $2 and Tri/Super are $1). totalPay is just stake × pay1.
+      const totalPay = pay1 * stake;
       r_pay.textContent = fmtMoney(totalPay);
       r_pay.className = 'result-pay';
-      const baseStr = bet === 'EX' ? '$2 base' : '$1 base';
-      r_line2.textContent = `${baseStr} pays ${fmtMoney(pay1)}`;
+      r_line2.textContent = `$1 base pays ${fmtMoney(pay1)}`;
     }
   }
 
