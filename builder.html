@@ -118,11 +118,16 @@
     color: #5a4400;
     text-align: center;
   }
-  .timestamp { font-size: 10px; color: var(--muted); text-align: center; margin-top: 6px; letter-spacing: 0.5px; display: flex; gap: 10px; align-items: center; justify-content: center; }
-  .refresh-btn { background: transparent; border: 1px solid var(--border); border-radius: 3px; padding: 3px 9px; font-size: 10px; letter-spacing: 1px; color: var(--muted); cursor: pointer; transition: color 0.15s, border-color 0.15s; }
-  .refresh-btn:hover:not(:disabled) { color: var(--accent-dark); border-color: var(--accent); }
-  .refresh-btn:disabled { opacity: 0.5; cursor: wait; }
+  .pool-totals { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; padding: 8px; background: white; border: 1px solid var(--border); border-radius: 4px; margin-top: 10px; }
+  .pool-pill { font-size: 10px; color: var(--muted); display: flex; gap: 4px; align-items: baseline; letter-spacing: 0.5px; }
+  .pool-pill-label { opacity: 0.6; }
+  .pool-pill-val { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; transition: color 0.4s; }
+  .pool-pill-val.bumped { color: var(--accent-dark); }
+  .timestamp { font-size: 10px; color: var(--muted); text-align: center; margin-top: 6px; letter-spacing: 0.5px; display: flex; gap: 8px; align-items: center; justify-content: center; }
   .timestamp.fresh #ts-text { color: var(--accent-dark); font-weight: 600; }
+  .live-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 0 rgba(17,199,92,0.6); animation: livePulse 2s ease-out infinite; }
+  @keyframes livePulse { 0% { box-shadow: 0 0 0 0 rgba(17,199,92,0.6); } 70% { box-shadow: 0 0 0 6px rgba(17,199,92,0); } 100% { box-shadow: 0 0 0 0 rgba(17,199,92,0); } }
+  .live-dot.error { background: #d33; animation: none; }
 
   /* Mobile tweaks */
   @media (max-width: 420px) {
@@ -193,9 +198,10 @@
     <div class="disclaimer-box">
       Exacta payouts reflect the live Churchill pool. Trifecta and Superfecta are estimated from the same data and are approximate.
     </div>
+    <div class="pool-totals" id="poolTotals" style="display:none;"></div>
     <div class="timestamp" id="ts">
       <span id="ts-text">Last odds pull: —</span>
-      <button class="refresh-btn" id="refresh">↻ REFRESH</button>
+      <span class="live-dot" id="liveDot" title="Auto-updates every minute"></span>
     </div>
   </div>
 </div>
@@ -234,6 +240,8 @@
   };
   let EXACTA = {};
 
+  let POOL_TOTALS = null;
+
   // Live fetch
   fetch('data/derby_pool_payouts.json?t=' + Date.now())
     .then(r => r.ok ? r.json() : null)
@@ -241,11 +249,42 @@
       if (d && d.strengths && d.exacta_payouts_dollar1) {
         POOL = { strengths: d.strengths, ex_factor: d.ex_factor || 0.834, tri_factor: d.tri_factor || 0.78, super_factor: d.super_factor || 0.75, updated_at: d.updated_at };
         EXACTA = d.exacta_payouts_dollar1;
+        POOL_TOTALS = d.pool_totals || null;
         updateTimestamp();
+        renderPoolTotals();
         recalc();
       }
     })
     .catch(e => console.warn('[builder] Pool fetch failed:', e));
+
+  function fmtThousands(n) {
+    if (n >= 1_000_000) return '$' + (n / 1_000_000).toFixed(2) + 'M';
+    if (n >= 1_000) return '$' + (n / 1_000).toFixed(0) + 'K';
+    return '$' + n;
+  }
+  function renderPoolTotals(prev) {
+    const el = document.getElementById('poolTotals');
+    if (!POOL_TOTALS) { el.style.display = 'none'; return; }
+    const order = ['WN', 'PL', 'SH', 'EX'];
+    const labels = { WN: 'WIN', PL: 'PLACE', SH: 'SHOW', EX: 'EXACTA' };
+    const pills = order
+      .filter(c => POOL_TOTALS[c])
+      .map(c => {
+        const grew = prev && prev[c] && POOL_TOTALS[c].gross > prev[c].gross;
+        return `<div class="pool-pill"><span class="pool-pill-label">${labels[c]}:</span> <span class="pool-pill-val${grew ? ' bumped' : ''}" data-code="${c}">${fmtThousands(POOL_TOTALS[c].gross)}</span></div>`;
+      })
+      .join('');
+    if (pills) {
+      el.innerHTML = pills;
+      el.style.display = 'flex';
+      // Strip the bumped class after flash
+      setTimeout(() => {
+        el.querySelectorAll('.pool-pill-val.bumped').forEach(n => n.classList.remove('bumped'));
+      }, 1200);
+    } else {
+      el.style.display = 'none';
+    }
+  }
 
   function poolEx1(a, b) { return EXACTA[a + '-' + b] || null; }
   function poolTri1(a, b, c) {
@@ -278,36 +317,38 @@
     }
   }
 
-  async function refreshOdds() {
-    const btn = document.getElementById('refresh');
+  // Auto-poll the JSON every 60 seconds. Pool totals tick up live, timestamp ticks
+  // each scrape (every 5 min), per-combo payouts refresh whenever NYRA's probables move.
+  // Silent — no UI button required.
+  async function pollOdds() {
     const tsBox = document.getElementById('ts');
-    const tsText = document.getElementById('ts-text');
-    btn.disabled = true;
-    btn.textContent = '⟳ FETCHING...';
+    const dot = document.getElementById('liveDot');
     try {
       const r = await fetch('data/derby_pool_payouts.json?t=' + Date.now(), { cache: 'no-store' });
       if (!r.ok) throw new Error('HTTP ' + r.status);
       const d = await r.json();
-      if (d && d.strengths && d.exacta_payouts_dollar1) {
-        POOL = { strengths: d.strengths, ex_factor: d.ex_factor || 0.834, tri_factor: d.tri_factor || 0.78, super_factor: d.super_factor || 0.75, updated_at: d.updated_at };
-        EXACTA = d.exacta_payouts_dollar1;
-        updateTimestamp();
-        recalc();
-        // Brief green-flash confirmation
+      if (!d || !d.strengths || !d.exacta_payouts_dollar1) throw new Error('bad payload');
+      const stampChanged = POOL.updated_at !== d.updated_at;
+      const prevTotals = POOL_TOTALS;
+      POOL = { strengths: d.strengths, ex_factor: d.ex_factor || 0.834, tri_factor: d.tri_factor || 0.78, super_factor: d.super_factor || 0.75, updated_at: d.updated_at };
+      EXACTA = d.exacta_payouts_dollar1;
+      POOL_TOTALS = d.pool_totals || null;
+      updateTimestamp();
+      renderPoolTotals(prevTotals);
+      recalc();
+      if (stampChanged) {
+        // Brief green-flash on the timestamp when fresh data lands
         tsBox.classList.add('fresh');
         setTimeout(() => tsBox.classList.remove('fresh'), 1500);
-      } else {
-        throw new Error('bad payload');
       }
+      dot.classList.remove('error');
     } catch (e) {
-      tsText.textContent = 'Refresh failed: ' + e.message;
-      console.warn('[builder] refresh failed:', e);
+      console.warn('[builder] poll failed:', e.message);
+      dot.classList.add('error');
     }
-    setTimeout(() => {
-      btn.disabled = false;
-      btn.textContent = '↻ REFRESH';
-    }, 600);
   }
+  // Kick off polling 60s after initial load
+  setInterval(pollOdds, 60_000);
 
   let bet = 'EX';
   let picks = [];
@@ -438,8 +479,6 @@
     } else if (clearAllBtn) {
       picks = [];
       render();
-    } else if (e.target.closest('#refresh')) {
-      refreshOdds();
     }
   });
 
