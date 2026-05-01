@@ -118,7 +118,11 @@
     color: #5a4400;
     text-align: center;
   }
-  .timestamp { font-size: 10px; color: var(--muted); text-align: center; margin-top: 6px; letter-spacing: 0.5px; }
+  .timestamp { font-size: 10px; color: var(--muted); text-align: center; margin-top: 6px; letter-spacing: 0.5px; display: flex; gap: 10px; align-items: center; justify-content: center; }
+  .refresh-btn { background: transparent; border: 1px solid var(--border); border-radius: 3px; padding: 3px 9px; font-size: 10px; letter-spacing: 1px; color: var(--muted); cursor: pointer; transition: color 0.15s, border-color 0.15s; }
+  .refresh-btn:hover:not(:disabled) { color: var(--accent-dark); border-color: var(--accent); }
+  .refresh-btn:disabled { opacity: 0.5; cursor: wait; }
+  .timestamp.fresh #ts-text { color: var(--accent-dark); font-weight: 600; }
 
   /* Mobile tweaks */
   @media (max-width: 420px) {
@@ -189,7 +193,10 @@
     <div class="disclaimer-box">
       Exacta payouts reflect the live Churchill pool. Trifecta and Superfecta are estimated from the same data and are approximate.
     </div>
-    <div class="timestamp" id="ts">Last odds pull: —</div>
+    <div class="timestamp" id="ts">
+      <span id="ts-text">Last odds pull: —</span>
+      <button class="refresh-btn" id="refresh">↻ REFRESH</button>
+    </div>
   </div>
 </div>
 
@@ -262,13 +269,44 @@
   function fmtMoney(x) { return '$' + x.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 
   function updateTimestamp() {
-    const ts = document.getElementById('ts');
+    const tsText = document.getElementById('ts-text');
     if (POOL.updated_at) {
       const d = new Date(POOL.updated_at);
-      ts.textContent = 'Last odds pull: ' + d.toLocaleString('en-US', { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
+      tsText.textContent = 'Last odds pull: ' + d.toLocaleString('en-US', { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
     } else {
-      ts.textContent = 'Last odds pull: cached fallback';
+      tsText.textContent = 'Last odds pull: cached fallback';
     }
+  }
+
+  async function refreshOdds() {
+    const btn = document.getElementById('refresh');
+    const tsBox = document.getElementById('ts');
+    const tsText = document.getElementById('ts-text');
+    btn.disabled = true;
+    btn.textContent = '⟳ FETCHING...';
+    try {
+      const r = await fetch('data/derby_pool_payouts.json?t=' + Date.now(), { cache: 'no-store' });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const d = await r.json();
+      if (d && d.strengths && d.exacta_payouts_dollar1) {
+        POOL = { strengths: d.strengths, ex_factor: d.ex_factor || 0.834, tri_factor: d.tri_factor || 0.78, super_factor: d.super_factor || 0.75, updated_at: d.updated_at };
+        EXACTA = d.exacta_payouts_dollar1;
+        updateTimestamp();
+        recalc();
+        // Brief green-flash confirmation
+        tsBox.classList.add('fresh');
+        setTimeout(() => tsBox.classList.remove('fresh'), 1500);
+      } else {
+        throw new Error('bad payload');
+      }
+    } catch (e) {
+      tsText.textContent = 'Refresh failed: ' + e.message;
+      console.warn('[builder] refresh failed:', e);
+    }
+    setTimeout(() => {
+      btn.disabled = false;
+      btn.textContent = '↻ REFRESH';
+    }, 600);
   }
 
   let bet = 'EX';
@@ -400,6 +438,8 @@
     } else if (clearAllBtn) {
       picks = [];
       render();
+    } else if (e.target.closest('#refresh')) {
+      refreshOdds();
     }
   });
 
