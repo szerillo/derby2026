@@ -71,6 +71,17 @@ async function main() {
   if (!exPool) throw new Error('No EXACTA pool in response');
   console.log(`Exacta pool has ${exPool.probables.length} probables`);
 
+  // Capture pool totals (always growing as bets come in — visual proof data is live)
+  const poolTotals = {};
+  for (const p of data.pools) {
+    poolTotals[p.poolTypeCode] = {
+      type: p.poolTypeName,
+      gross: Math.round(p.currentTotalPoolGross?.amount || 0),
+      net: Math.round(p.currentTotalPoolNet?.amount || 0),
+      status: p.poolStatus,
+    };
+  }
+
   // Parse exacta probables: selection like "1,10" → key "1-10"
   const exacta = {};
   for (const p of exPool.probables) {
@@ -152,6 +163,7 @@ async function main() {
     updated_at: new Date().toISOString(),
     race_id: 102081587,
     field: FIELD,
+    pool_totals: poolTotals,
     strengths: Object.fromEntries(FIELD.map((h) => [String(h), Number(fieldStrength[h].toFixed(4))])),
     exacta_payouts_dollar1: fieldExacta,
     ex_factor: Number(median.toFixed(4)),
