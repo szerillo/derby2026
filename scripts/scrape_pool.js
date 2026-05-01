@@ -14,7 +14,8 @@ const path = require('path');
 // If NYRA changes the IDs (rare), update them here.
 const POOL_IDS = [115909273, 115909274, 115909275, 115909276, 115919053];
 const API_URL = 'https://brk0201-iapi-webservice.nyrabets.com/GetProbables.ashx';
-const FIELD = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 16, 17, 18, 19, 21, 22];
+// Post 5 (Right to Party) scratched 4/30; AE3 Robusta drew in as post 23.
+const FIELD = [1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 14, 15, 16, 17, 18, 19, 21, 22, 23];
 const TRI_FACTOR = 0.78;
 const SUPER_FACTOR = 0.75;
 
@@ -125,7 +126,7 @@ async function main() {
     }
   }
 
-  // Re-normalize to our 20-horse field (drop scratched 13 + AE 23/24 + 20 if Fulleffort still pooled)
+  // Re-normalize to our 20-horse field (drop scratched 5/13/20, keep AE-drawn-in 21/22/23)
   const fieldStrength = {};
   let fieldSum = 0;
   for (const h of FIELD) {
