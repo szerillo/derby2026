@@ -15,7 +15,8 @@ const path = require('path');
 const POOL_IDS = [115909273, 115909274, 115909275, 115909276, 115919053];
 const API_URL = 'https://brk0201-iapi-webservice.nyrabets.com/GetProbables.ashx';
 // Post 5 (Right to Party) scratched 4/30; AE3 Robusta drew in as post 23.
-const FIELD = [1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 14, 15, 16, 17, 18, 19, 21, 22, 23];
+// Post 9 (The Puma) scratched 5/2 morning. Field is 19.
+const FIELD = [1, 2, 3, 4, 6, 7, 8, 10, 11, 12, 14, 15, 16, 17, 18, 19, 21, 22, 23];
 const TRI_FACTOR = 0.78;
 const SUPER_FACTOR = 0.75;
 
