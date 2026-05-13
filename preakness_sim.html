@@ -76,6 +76,9 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light;
 .dt-replay-btn { padding: 0 14px; flex-shrink: 0; height: 34px; box-sizing: border-box; background: transparent; color: rgba(245, 200, 75, 0.7); border: 1px solid rgba(245, 200, 75, 0.35); border-radius: 4px; cursor: pointer; font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 10px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; transition: all 0.15s; }
 .dt-replay-btn:hover:not(:disabled) { background: rgba(245, 200, 75, 0.08); color: #FFD400; border-color: rgba(245, 200, 75, 0.6); }
 .dt-replay-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+.dt-speed-btn { padding: 0 12px; flex-shrink: 0; height: 34px; box-sizing: border-box; background: transparent; color: rgba(245,200,75,0.7); border: 1px solid rgba(245,200,75,0.35); border-radius: 4px; cursor: pointer; font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 1px; min-width: 42px; transition: all 0.15s; }
+.dt-speed-btn:hover { background: rgba(245,200,75,0.08); color: #FFD400; border-color: rgba(245,200,75,0.6); }
+.dt-speed-btn.fast { background: #FFD400; color: #160E05; border-color: #FFD400; }
 
 .skip-link { position: absolute; bottom: 8px; right: 8px; background: rgba(0,0,0,0.65); color: rgba(245,200,75,0.85); padding: 4px 10px; border-radius: 4px; font-size: 10px; letter-spacing: 1.2px; cursor: pointer; opacity: 0; pointer-events: none; z-index: 6; border: 1px solid rgba(245,200,75,0.35); transition: opacity 0.2s, background 0.15s, color 0.15s; font-family: var(--font-sans); user-select: none; }
 .skip-link.show { opacity: 1; pointer-events: auto; }
@@ -211,6 +214,7 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light;
       <span class="dt-hint" id="dt-hint">Tap any horse # for odds, jockey + projected win %</span>
       <div class="pace-badge" id="pace-badge"><span class="pace-badge-lbl">PACE</span><span class="pace-badge-val">—</span></div>
       <div class="dt-buttons">
+        <button class="dt-speed-btn" id="dt-speed" title="Toggle race speed">1×</button>
         <button class="dt-replay-btn" id="dt-replay" disabled>Replay</button>
         <button class="dt-play-btn" id="dt-play" disabled>New Sim</button>
       </div>
@@ -251,7 +255,9 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light;
 
   const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
   const sleep = (ms) => new Promise(r => setTimeout(r, ms));
-  const RACE_DURATION_MS = 30000;
+  const RACE_DURATION_BASE_MS = 30000;
+  let RACE_SPEED = 1; // 1 = normal, 2 = double
+  function raceDurationMs() { return RACE_DURATION_BASE_MS / RACE_SPEED; }
 
   const W = 680, H = 240;
   const cx = W / 2, cy = 120;
@@ -325,6 +331,14 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light;
   const paceBadge = document.getElementById('pace-badge');
   playBtn.addEventListener('click', () => { if (isRunning) return; cancelAnimationFrame(raf); runSim(false); });
   replayBtn.addEventListener('click', () => { if (isRunning || !lastSimState) return; cancelAnimationFrame(raf); runSim(true); });
+  const speedBtn = document.getElementById('dt-speed');
+  if (speedBtn) {
+    speedBtn.addEventListener('click', () => {
+      RACE_SPEED = (RACE_SPEED === 1) ? 2 : 1;
+      speedBtn.textContent = RACE_SPEED + '×';
+      speedBtn.classList.toggle('fast', RACE_SPEED === 2);
+    });
+  }
 
   function showTrack() {
     toteEl.classList.remove('show');
@@ -842,7 +856,7 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light;
 
     function frame(now) {
       if (currentSim.frozen) return;
-      const t = Math.min(1, (now - start) / RACE_DURATION_MS);
+      const t = Math.min(1, (now - start) / raceDurationMs());
       // stretchWeight: 0 early (everyone bunched), ramps to 1 by t=0.8 (full factor effect by stretch)
       const swRaw = Math.max(0, Math.min(1, (t - 0.4) / 0.4));
       const stretchWeight = swRaw * swRaw * (3 - 2 * swRaw); // smoothstep
