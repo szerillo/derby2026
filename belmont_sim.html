@@ -242,7 +242,7 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light;
   // --- v3.2: Real database of 10,000 sims (Option A) ---
   let SIMS_DATA = null;
   let currentSimIdx = null;
-  fetch('data/belmont/belmont_sims.json?v=v10').then(r => r.json()).then(d => {
+  fetch('data/belmont/belmont_sims.json?v=v11').then(r => r.json()).then(d => {
     SIMS_DATA = d;
     document.getElementById('dt-play').disabled = false;
     const counterEl = document.getElementById('sim-counter');
@@ -466,7 +466,7 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light;
       text.textContent = label;
       svgEl.appendChild(text);
     }
-    tickAt(0.0001, 'FINISH', { thick: true });
+    // Pole markers (1/4, 1/2, 3/4, 1/8) — labels render inside the infield grass
     tickAt(0.20, '1/4', {});
     tickAt(0.40, '1/2', {});
     tickAt(0.60, '3/4', {});
@@ -495,6 +495,45 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light;
       text.setAttribute('fill', '#11c75c');
       text.setAttribute('font-family', 'var(--font-sans)');
       text.textContent = 'START';
+      svgEl.appendChild(text);
+    }
+
+    // FINISH wire marker — label below the bottom rail (same y as START) so it doesn't overlap the infield banner
+    {
+      const wireX = cx + wireOffset;
+      const wireY = cy + R;
+      const inner = { x: wireX, y: wireY - (ringWidth/2 - 2) };
+      const outer = { x: wireX, y: wireY + (ringWidth/2 - 2) };
+      const line = document.createElementNS(NS, 'line');
+      line.setAttribute('x1', inner.x); line.setAttribute('y1', inner.y);
+      line.setAttribute('x2', outer.x); line.setAttribute('y2', outer.y);
+      line.setAttribute('stroke', '#1a1a1a');
+      line.setAttribute('stroke-width', '2.6');
+      svgEl.appendChild(line);
+      const overlay = document.createElementNS(NS, 'line');
+      overlay.setAttribute('x1', inner.x); overlay.setAttribute('y1', inner.y);
+      overlay.setAttribute('x2', outer.x); overlay.setAttribute('y2', outer.y);
+      overlay.setAttribute('stroke', 'rgba(255,255,255,0.6)');
+      overlay.setAttribute('stroke-width', '0.8');
+      overlay.setAttribute('stroke-dasharray', '3,3');
+      svgEl.appendChild(overlay);
+      const dot = document.createElementNS(NS, 'circle');
+      dot.setAttribute('cx', wireX);
+      dot.setAttribute('cy', wireY + ringWidth/2 + 4);
+      dot.setAttribute('r', '2.5');
+      dot.setAttribute('fill', '#11c75c');
+      dot.setAttribute('stroke', '#000000');
+      dot.setAttribute('stroke-width', '0.5');
+      svgEl.appendChild(dot);
+      const text = document.createElementNS(NS, 'text');
+      text.setAttribute('x', wireX);
+      text.setAttribute('y', wireY + ringWidth/2 + 12);
+      text.setAttribute('text-anchor', 'middle');
+      text.setAttribute('font-size', '12');
+      text.setAttribute('font-weight', '700');
+      text.setAttribute('fill', '#11c75c');
+      text.setAttribute('font-family', 'var(--font-sans)');
+      text.textContent = 'FINISH';
       svgEl.appendChild(text);
     }
 
