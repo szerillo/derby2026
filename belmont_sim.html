@@ -154,7 +154,7 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light;
 .tb-rest-item { display: inline-flex; align-items: center; gap: 4px; }
 .tb-rest-pos { font-size: 10px; color: rgba(199,166,84,0.55); font-variant-numeric: tabular-nums; }
 .tb-rest-silk { display: inline-block; width: 20px; height: 20px; border-radius: 3px; text-align: center; line-height: 20px; font-size: 10px; font-weight: 500; border: 0.5px solid rgba(0,0,0,0.4); cursor: help; }
-.tb-disclaimer { font-size: 11px; color: rgba(232,213,159,0.75); margin: 10px 0 4px; padding: 8px 14px; background: transparent; border: 0.5px solid rgba(199,166,84,0.18); border-radius: 4px; text-align: center; line-height: 1.45; letter-spacing: 0.2px; }
+.tb-disclaimer { font-size: 11px; color: rgba(232,213,159,0.65); margin: 10px 0 4px; padding: 6px 12px; background: transparent; border: none; text-align: center; line-height: 1.45; letter-spacing: 0.2px; }
 .tb-meta { font-size: 9px; color: rgba(199,166,84,0.4); margin-top: 6px; letter-spacing: 0.5px; text-align: center; }
 
 @media (max-width: 600px) {
@@ -242,7 +242,7 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light;
   // --- v3.2: Real database of 10,000 sims (Option A) ---
   let SIMS_DATA = null;
   let currentSimIdx = null;
-  fetch('data/belmont/belmont_sims.json?v=10k3').then(r => r.json()).then(d => {
+  fetch('data/belmont/belmont_sims.json?v=10k4').then(r => r.json()).then(d => {
     SIMS_DATA = d;
     document.getElementById('dt-play').disabled = false;
     const counterEl = document.getElementById('sim-counter');
@@ -541,7 +541,7 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light;
       const N = horses.length;
       const mid = (N - 1) / 2;
       const offsetFromMid = (i - mid) / Math.max(mid, 1);
-      const laneOffset = -offsetFromMid * 5;  // tight spread for 9-horse Belmont field
+      const laneOffset = -offsetFromMid * 3;  // very tight spread for 9-horse Belmont field
       const x = pt.x + innerNX * laneOffset;
       const y = pt.y + innerNY * laneOffset;
       const el = document.querySelector(`.horse-h[data-i="${i}"]`);
@@ -1039,14 +1039,11 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light;
     const sPlace   = smd * 0.85 + 1.0;
     const sShow    = smd * 0.40 + 1.5;
     const tShow    = tmd * 0.40 + 1.5;
-    // Pool-anchored exotic payouts (live data); fall back to ML-derived if combo isn't in pool.
-    const ex1 = poolExacta1(w.post, s.post);
-    const tri1 = poolTrifecta1(w.post, s.post, t.post);
-    const sup1 = poolSuperfecta1(w.post, s.post, t.post, f.post);
-    // $2 EXACTA, $1 TRIFECTA, $1 SUPERFECTA (historical Belmont scaling)
-    const exacta     = ex1  != null ? ex1 * 2          : wmd * smd * 2.2;
-    const trifecta   = tri1 != null ? tri1             : wmd * smd * tmd * 2.5;
-    const superfecta = sup1 != null ? sup1             : wmd * smd * tmd * fmd * 1.0;
+    // ML-derived exotic payouts (no live pool feed for Belmont 2026)
+    // $2 EXACTA, $1 TRIFECTA, $1 SUPERFECTA — calibrated to historical Belmont averages 2000-2020
+    const exacta     = wmd * smd * 2.2;
+    const trifecta   = wmd * smd * tmd * 2.5;
+    const superfecta = wmd * smd * tmd * fmd * 1.0;
     const finalTime = `2:0${Math.floor(Math.random()*4)}.${(Math.floor(Math.random()*100)).toString().padStart(2,'0')}`;
     const silk = h => `<span class="tb-silk" data-post="${h.post}" style="background:${h.tw};color:${h.nm};">${h.post}</span>`;
     const restSilk = h => `<span class="tb-rest-silk" data-post="${h.post}" style="background:${h.tw};color:${h.nm};">${h.post}</span>`;
