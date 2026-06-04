@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<!-- belmont_sim.html v1.0 - 158th Belmont Stakes at Saratoga, 9-horse field -->
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="color-scheme" content="light only" />
+<title>158th Belmont Stakes — Race Simulator</title>
+<style>
+:root {
+  color-scheme: light only;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light;
+  font-family: var(--font-sans); color: #1a1a1a; }
+.sim-frame { max-width: 1200px; margin: 0 auto; padding: 12px; box-sizing: border-box; }
+.sim-doc-header {
+  position: relative;
+  background: linear-gradient(135deg, #0e5c39 0%, #0a4029 100%);
+  color: #fff;
+  padding: 14px 18px;
+  border-radius: 8px 8px 0 0;
+  text-align: center;
+  margin-bottom: 0;
+  border-bottom: 3px solid #11c75c;
+}
+.sim-doc-title { font-size: 18px; font-weight: 700; margin: 0 0 2px; }
+.sim-doc-subtitle { font-size: 11px; opacity: 0.7; margin: 0; }
+.sim-doc-byline { font-size: 11px; margin-top: 4px; opacity: 0.9; }
+.sim-doc-byline a { color: #11c75c; text-decoration: none; font-weight: 600; border-bottom: 1px dotted rgba(17,199,92,0.5); }
+.sim-doc-byline a:hover { border-bottom-style: solid; }
+.action-brand { position: absolute; top: 12px; right: 14px; display: inline-flex; align-items: center; gap: 5px; }
+.action-brand-text { font-weight: 900; font-size: 14px; color: #fff; }
+.action-brand-check { width: 16px; height: 16px; border-radius: 50%; background: #11c75c; display: inline-flex; align-items: center; justify-content: center; }
+.action-brand-check svg { width: 10px; height: 10px; }
+.dt { background: #f6f4f0; border-radius: 0 0 8px 8px; padding-bottom: 0; }
+.dt-hint {
+  flex: 1;
+  font-size: 11px;
+  color: #1a1a1a;
+  text-align: center;
+  letter-spacing: 0.2px;
+}
+.dt-hint.hidden { display: none; }
+@media (max-width: 600px) {
+  .action-brand { position: static; justify-content: center; margin-bottom: 6px; }
+  .sim-doc-title { font-size: 16px; }
+  .sim-frame { padding: 8px; }
+  .dt-hint { font-size: 10px; }
+  /* Mobile leaderboard: hide names, show silks only — fits 4 in 360px */
+  .leaderboard-name { display: none; }
+  .leaderboard { gap: 10px !important; padding: 5px 10px !important; }
+  .leaderboard-item { gap: 4px !important; }
+  /* On narrowest screens, hide the hint to save horizontal space */
+  .dt-hint { display: none; }
+}
+
+.dt { font-family: var(--font-sans); position: relative; }
+.dt-stage { background: #f6f4f0; border-radius: 8px; padding: 12px; }
+.dt-top-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.dt-leaderboard-row { margin-bottom: 10px; }
+.dt-leaderboard-row.hidden { display: none; }
+.dt-swap { position: relative; }
+.dt-track-area { display: block; position: relative; }
+.dt-track-area.hidden { display: none; }
+.dt-toteboard { display: none; }
+.dt-toteboard.show { display: block; animation: toteSlideIn 0.45s ease-out; }
+@keyframes toteSlideIn { from { opacity: 0; transform: translateY(-14px); } to { opacity: 1; transform: translateY(0); } }
+.dt-buttons { display: flex; gap: 6px; margin-left: auto; }
+
+.dt-play-btn { padding: 0 22px; flex-shrink: 0; height: 34px; box-sizing: border-box; background: #0a4029; color: #c7a654; border: 1px solid #7a8a35; border-radius: 4px; cursor: pointer; font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 11px; font-weight: 500; letter-spacing: 1.8px; text-transform: uppercase; transition: background 0.15s, color 0.15s, border-color 0.15s; }
+.dt-play-btn:hover:not(:disabled) { background: #0e5c39; color: #e8d59f; border-color: #a8b870; }
+.dt-play-btn:active { background: #0a3525; }
+.dt-play-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.dt-replay-btn { padding: 0 14px; flex-shrink: 0; height: 34px; box-sizing: border-box; background: transparent; color: rgba(199, 166, 84, 0.7); border: 1px solid rgba(199, 166, 84, 0.35); border-radius: 4px; cursor: pointer; font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 10px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; transition: all 0.15s; }
+.dt-replay-btn:hover:not(:disabled) { background: rgba(199, 166, 84, 0.08); color: #c7a654; border-color: rgba(199, 166, 84, 0.6); }
+.dt-replay-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+.dt-speed-btn { padding: 0 12px; flex-shrink: 0; height: 34px; box-sizing: border-box; background: transparent; color: rgba(199,166,84,0.7); border: 1px solid rgba(199,166,84,0.35); border-radius: 4px; cursor: pointer; font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 1px; min-width: 42px; transition: all 0.15s; }
+.dt-speed-btn:hover { background: rgba(199,166,84,0.08); color: #c7a654; border-color: rgba(199,166,84,0.6); }
+.dt-speed-btn.fast { background: #c7a654; color: #0a4029; border-color: #c7a654; }
+
+.skip-link { position: absolute; bottom: 8px; right: 8px; background: rgba(0,0,0,0.65); color: rgba(199,166,84,0.85); padding: 4px 10px; border-radius: 4px; font-size: 10px; letter-spacing: 1.2px; cursor: pointer; opacity: 0; pointer-events: none; z-index: 6; border: 1px solid rgba(199,166,84,0.35); transition: opacity 0.2s, background 0.15s, color 0.15s; font-family: var(--font-sans); user-select: none; }
+.skip-link.show { opacity: 1; pointer-events: auto; }
+.skip-link:hover { background: rgba(0,0,0,0.85); color: #c7a654; border-color: rgba(199,166,84,0.7); }
+
+.leaderboard { display: flex; align-items: center; gap: 18px; padding: 6px 14px; background: rgba(22,14,5,0.92); border: 1px solid rgba(199,166,84,0.3); border-radius: 4px; width: 100%; height: 34px; box-sizing: border-box; flex-wrap: nowrap; overflow: hidden; }
+.leaderboard-title { color: rgba(199,166,84,0.6); letter-spacing: 1.2px; font-size: 9px; flex-shrink: 0; }
+.leaderboard-placeholder { color: rgba(199,166,84,0.35); letter-spacing: 4px; font-size: 11px; }
+.leaderboard-item { display: inline-flex; align-items: center; gap: 7px; flex-shrink: 0; min-width: 0; }
+.leaderboard-pos { color: rgba(199,166,84,0.6); font-size: 10px; font-variant-numeric: tabular-nums; min-width: 8px; }
+.lb-silk { display: inline-block; width: 22px; height: 22px; border-radius: 2px; text-align: center; line-height: 22px; font-size: 11px; font-weight: 500; border: 0.5px solid rgba(0,0,0,0.4); cursor: help; flex-shrink: 0; }
+.leaderboard-name { color: rgba(255,255,255,0.92); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; letter-spacing: 0.3px; }
+
+.pace-badge { display: inline-flex; align-items: center; gap: 8px; padding: 0 12px; height: 28px; background: rgba(22,14,5,0.92); border: 1px solid rgba(199,166,84,0.3); border-radius: 4px; box-sizing: border-box; flex-shrink: 0; }
+.pace-badge.hidden { display: none; }
+.pace-badge-lbl { font-size: 9px; color: rgba(199,166,84,0.55); letter-spacing: 1.5px; }
+.pace-badge-val { font-size: 12px; font-weight: 500; letter-spacing: 1.2px; color: rgba(199,166,84,0.4); }
+.pace-badge.pace-fast .pace-badge-val { color: #F26B1F; }
+.pace-badge.pace-honest .pace-badge-val { color: #c7a654; }
+.pace-badge.pace-slow .pace-badge-val { color: #6FA8DC; }
+
+.race-script { background: rgba(22,14,5,0.92); border: 1px solid rgba(199,166,84,0.25); border-radius: 4px; padding: 10px 14px; margin-top: 12px; font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 12px; color: rgba(199,166,84,0.9); min-height: 44px; }
+.race-script-empty { font-style: italic; color: rgba(199,166,84,0.4); font-size: 11px; text-align: center; padding: 6px 0; }
+.script-entry { display: flex; gap: 14px; padding: 6px 0; border-bottom: 0.5px solid rgba(199,166,84,0.08); animation: scriptIn 0.35s ease-out; }
+.script-entry:last-child { border-bottom: none; }
+.script-phase { flex: 0 0 88px; color: rgba(199,166,84,0.5); font-size: 10px; letter-spacing: 1px; padding-top: 1px; }
+.script-text { flex: 1; color: rgba(199,166,84,0.78); line-height: 1.45; }
+.script-entry.is-newest .script-text { color: #e8d59f; }
+.script-entry.wire .script-text { color: #FFFFFF; font-weight: 500; }
+@keyframes scriptIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+
+.gate-bell { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); background: #000; color: #c7a654; padding: 10px 20px; border-radius: 4px; font-size: 16px; font-weight: 500; letter-spacing: 3px; opacity: 0; pointer-events: none; z-index: 7; border: 2px solid #c7a654; }
+.gate-bell.show { opacity: 1; animation: bellPulse 0.6s ease-in-out; }
+@keyframes bellPulse { 0% { transform: translate(-50%,-50%) scale(0.7); opacity: 0; } 30% { transform: translate(-50%,-50%) scale(1.1); opacity: 1; } 70% { transform: translate(-50%,-50%) scale(1); opacity: 1; } 100% { transform: translate(-50%,-50%) scale(1); opacity: 0; } }
+
+.photo-finish { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%) scale(0.8); background: rgba(0,0,0,0.85); color: #c7a654; padding: 12px 28px; border-radius: 4px; font-size: 18px; font-weight: 500; letter-spacing: 4px; border: 2px solid #c7a654; opacity: 0; transition: opacity 0.3s, transform 0.3s; z-index: 8; pointer-events: none; }
+.photo-finish.show { opacity: 1; transform: translate(-50%,-50%) scale(1); animation: photoFlash 0.5s ease-in-out 2 alternate; }
+@keyframes photoFlash { from { background: rgba(0,0,0,0.85); color: #c7a654; } to { background: rgba(255,255,255,0.95); color: #000; } }
+
+.winner-flash { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%) scale(0.85); background: rgba(22,14,5,0.96); border: 2px solid #c7a654; border-radius: 6px; padding: 14px 24px; text-align: center; opacity: 0; transition: opacity 0.35s, transform 0.35s; z-index: 9; pointer-events: none; min-width: 240px; }
+.winner-flash.show { opacity: 1; transform: translate(-50%,-50%) scale(1); animation: winnerPulse 1.6s ease-in-out; }
+@keyframes winnerPulse { 0%, 100% { box-shadow: 0 0 0 rgba(255,212,0,0); } 50% { box-shadow: 0 0 20px rgba(255,212,0,0.4); } }
+.winner-emoji { font-size: 26px; display: block; margin-bottom: 4px; }
+.winner-label { font-size: 10px; color: rgba(199,166,84,0.7); letter-spacing: 2.5px; margin-bottom: 8px; }
+.winner-name-row { font-size: 18px; color: #FFFFFF; font-weight: 500; letter-spacing: 0.8px; display: flex; align-items: center; justify-content: center; gap: 10px; }
+.winner-silk { display: inline-block; width: 30px; height: 30px; border-radius: 4px; line-height: 30px; font-size: 13px; font-weight: 500; border: 1px solid rgba(0,0,0,0.4); }
+
+.horse-tooltip { position: absolute; pointer-events: none; z-index: 10; background: rgba(22,14,5,0.97); border: 1px solid rgba(199,166,84,0.4); border-radius: 6px; padding: 8px 12px; font-size: 11px; color: #c7a654; opacity: 0; transition: opacity 0.15s; min-width: 170px; max-width: 230px; display: none; }
+.horse-tooltip.show { opacity: 1; display: block; }
+.tip-name { font-weight: 500; color: #FFFFFF; font-size: 13px; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+.tip-row { display: flex; justify-content: space-between; gap: 12px; padding: 1.5px 0; color: rgba(199,166,84,0.85); font-variant-numeric: tabular-nums; }
+.tip-lbl { color: rgba(199,166,84,0.55); font-size: 10px; }
+
+.tb { background: #0a4029; color: #c7a654; padding: 16px 22px; border-radius: 6px; border: 1px solid #5a4a25; font-family: 'Helvetica Neue', Arial, sans-serif; }
+.tb-title { font-size: 17px; font-weight: 500; text-align: center; letter-spacing: 2px; color: #FFFFFF; margin-bottom: 4px; }
+.tb-sub { font-size: 11px; text-align: center; color: rgba(199,166,84,0.7); letter-spacing: 1.5px; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 0.5px solid rgba(199,166,84,0.2); }
+.tb-tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+.tb-tbl th { font-size: 10px; font-weight: 500; color: rgba(199,166,84,0.55); text-align: right; padding: 6px 5px; letter-spacing: 1px; }
+.tb-tbl th.l { text-align: left; }
+.tb-tbl td { padding: 9px 5px; font-variant-numeric: tabular-nums; text-align: right; }
+.tb-tbl td.l { text-align: left; }
+.tb-tbl td.silk { width: 28px; }
+.tb-tbl td.name { font-weight: 500; color: #FFFFFF; letter-spacing: 0.4px; }
+.tb-tbl td.margin { color: rgba(199,166,84,0.65); font-size: 11px; font-style: italic; }
+.tb-silk { display: inline-block; width: 22px; height: 22px; border-radius: 3px; text-align: center; line-height: 22px; font-size: 11px; font-weight: 500; border: 0.5px solid rgba(0,0,0,0.4); cursor: help; }
+.tb-exotics { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; border-top: 0.5px solid rgba(199,166,84,0.25); padding-top: 12px; margin-top: 8px; }
+.tb-exotic { text-align: center; }
+.tb-exotic-lbl { font-size: 10px; color: rgba(199,166,84,0.6); letter-spacing: 1px; margin-bottom: 4px; }
+.tb-exotic-combo { font-size: 13px; color: #FFFFFF; margin-bottom: 3px; font-variant-numeric: tabular-nums; letter-spacing: 0.5px; }
+.tb-exotic-pay { font-size: 15px; color: #c7a654; font-weight: 500; font-variant-numeric: tabular-nums; }
+.tb-rest { display: flex; flex-wrap: wrap; gap: 6px; padding: 12px 0 4px; border-top: 0.5px solid rgba(199,166,84,0.18); margin-top: 12px; }
+.tb-rest-lbl { font-size: 10px; color: rgba(199,166,84,0.55); letter-spacing: 1px; align-self: center; margin-right: 4px; }
+.tb-rest-item { display: inline-flex; align-items: center; gap: 4px; }
+.tb-rest-pos { font-size: 10px; color: rgba(199,166,84,0.55); font-variant-numeric: tabular-nums; }
+.tb-rest-silk { display: inline-block; width: 20px; height: 20px; border-radius: 3px; text-align: center; line-height: 20px; font-size: 10px; font-weight: 500; border: 0.5px solid rgba(0,0,0,0.4); cursor: help; }
+.tb-disclaimer { font-size: 11px; color: rgba(199,166,84,0.85); margin: 10px 0 4px; padding: 8px 14px; background: rgba(199,166,84,0.06); border: 0.5px solid rgba(199,166,84,0.22); border-radius: 4px; text-align: center; line-height: 1.45; letter-spacing: 0.2px; }
+.tb-meta { font-size: 9px; color: rgba(199,166,84,0.4); margin-top: 6px; letter-spacing: 0.5px; text-align: center; }
+
+@media (max-width: 600px) {
+  .dt-top-bar { gap: 6px; }
+  .dt-buttons { gap: 4px; }
+  .dt-play-btn { padding: 0 14px; font-size: 10px; letter-spacing: 1px; }
+  .dt-replay-btn { padding: 0 10px; font-size: 9px; letter-spacing: 1px; }
+  .pace-badge { padding: 0 8px; height: 26px; gap: 6px; }
+  .pace-badge-lbl { font-size: 8px; }
+  .pace-badge-val { font-size: 11px; }
+  .leaderboard { padding: 5px 8px; height: auto; min-height: 30px; gap: 10px; }
+  .leaderboard-title { font-size: 8px; letter-spacing: 1px; }
+  .leaderboard-item { gap: 4px; }
+  .leaderboard-pos { font-size: 9px; }
+  .lb-silk { width: 18px; height: 18px; line-height: 18px; font-size: 10px; }
+  .leaderboard-name { font-size: 10px; }
+  .skip-link { font-size: 9px; padding: 3px 8px; bottom: 6px; right: 6px; }
+  .gate-bell { padding: 8px 14px; font-size: 13px; letter-spacing: 2px; }
+  .photo-finish { padding: 10px 22px; font-size: 15px; letter-spacing: 3px; }
+  .winner-flash { padding: 10px 16px; min-width: 200px; }
+  .winner-emoji { font-size: 22px; }
+  .winner-name-row { font-size: 14px; }
+  .winner-silk { width: 24px; height: 24px; line-height: 24px; font-size: 11px; }
+  .race-script { font-size: 11px; padding: 8px 10px; }
+  .script-phase { flex: 0 0 64px; font-size: 9px; }
+  .script-entry { padding: 5px 0; gap: 10px; }
+  .tb { padding: 12px 14px; }
+  .tb-title { font-size: 14px; letter-spacing: 1.2px; }
+  .tb-tbl td { padding: 6px 3px; font-size: 11px; }
+  .tb-tbl th { font-size: 8px; padding: 4px 2px; }
+  .tb-silk { width: 18px; height: 18px; line-height: 18px; font-size: 10px; }
+  .tb-exotics { gap: 6px; }
+  .tb-exotic-lbl { font-size: 8px; letter-spacing: 0.5px; }
+  .tb-exotic-combo { font-size: 11px; }
+  .tb-exotic-pay { font-size: 12px; }
+  .tb-disclaimer { font-size: 10px; line-height: 1.4; padding: 6px 10px; }
+  .tb-meta { font-size: 8px; }
+}
+
+</style>
+</head>
+<body>
+<div class="sim-frame">
+  <div class="sim-doc-header" style="border-bottom: 4px solid #c7a654;">
+    <div class="action-brand">
+  <span class="action-brand-text">ACTION</span>
+  <span class="action-brand-check"><svg viewBox="0 0 14 14" xmlns="http://www.w3.org/2000/svg"><path d="M3 7.2 L6 10 L11 4" stroke="#fff" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+</div>
+    <div class="sim-doc-title" style="color:#c7a654;">158th Belmont Stakes — Race Simulator</div>
+    <div class="sim-doc-subtitle">1 1/4 miles · Saratoga</div>
+    <div class="sim-doc-byline">By <a href="https://twitter.com/SeanZerillo" target="_blank" rel="noopener">@SeanZerillo</a></div>
+  </div>
+  <div class="dt">
+  <div class="dt-stage">
+    <div class="dt-top-bar">
+      <span class="sim-counter" id="sim-counter" style="font-size:11px;color:#1a1a1a;font-weight:600;font-family:var(--font-sans);flex-shrink:0;">Loading 10,000 sims…</span>
+      <span class="dt-hint" id="dt-hint">Tap any horse # for odds, jockey + projected win %</span>
+      <div class="pace-badge" id="pace-badge"><span class="pace-badge-lbl">PACE</span><span class="pace-badge-val">—</span></div>
+      <div class="dt-buttons">
+        <button class="dt-speed-btn" id="dt-speed" title="Toggle race speed">1×</button>
+        <button class="dt-replay-btn" id="dt-replay" disabled>Replay</button>
+        <button class="dt-play-btn" id="dt-play" disabled>New Sim</button>
+      </div>
+    </div>
+    <div class="dt-leaderboard-row" id="dt-leaderboard-row">
+      <div class="leaderboard" id="leaderboard"></div>
+    </div>
+    <div class="dt-swap">
+      <div class="dt-track-area" id="dt-track-area"></div>
+      <div class="dt-toteboard" id="dt-toteboard"></div>
+    </div>
+    <div class="race-script" id="race-script"><div class="race-script-empty">Race transcript appears here as the call unfolds (newest on top)</div></div>
+  </div>
+  <div class="horse-tooltip" id="horse-tooltip"></div>
+</div>
+
+<script>
+(function() {
+  console.log('[Derby sim] v3.14 loaded - live pool payouts via data/preakness_pool.json');
+  // v3.12 — Field updated for Silent Tactic (#13) + Fulleffort (#20) scratches.
+  // Great White (#21) and Ocelli (#22) drew in as AEs; saddle towels keep their numbers (skip 13 + 20).
+  // simWin / boardPct = blended (model + expert panel) probabilities.
+  const horses = [{"post":1,"name":"Vitruvian Man","tw":"#E11A1A","nm":"#FFFFFF","style":"S","ability":90.8,"ml":"30-1","ml_dec":31,"jockey":"A. Fresu","trainer":"D. O'Neill","simWin":1.42,"boardPct":5.37},{"post":2,"name":"Powershift","tw":"#FFFFFF","nm":"#000000","style":"E","ability":100.0,"ml":"12-1","ml_dec":13,"jockey":"L. Saez","trainer":"T. Pletcher","simWin":4.54,"boardPct":17.53},{"post":3,"name":"Chief Wallabee","tw":"#1B4FB0","nm":"#FFFFFF","style":"EP","ability":105.1,"ml":"3-1","ml_dec":4,"jockey":"J. Alvarado","trainer":"W. Mott","simWin":27.98,"boardPct":73.2},{"post":4,"name":"Renegade","tw":"#F4DA15","nm":"#000000","style":"S","ability":104.0,"ml":"2-1","ml_dec":3,"jockey":"I. Ortiz Jr","trainer":"T. Pletcher","simWin":23.73,"boardPct":64.84},{"post":5,"name":"Ottinho","tw":"#1F8A3A","nm":"#FFFFFF","style":"EP","ability":94.2,"ml":"20-1","ml_dec":21,"jockey":"D. Davis","trainer":"C. Brown","simWin":1.62,"boardPct":6.05},{"post":6,"name":"Growth Equity","tw":"#000000","nm":"#B6E04C","style":"EP","ability":97.3,"ml":"12-1","ml_dec":13,"jockey":"M. Franco","trainer":"C. Brown","simWin":2.79,"boardPct":10.24},{"post":7,"name":"Commandment","tw":"#F26B1F","nm":"#000000","style":"EP","ability":106.5,"ml":"6-1","ml_dec":7,"jockey":"J. Velazquez","trainer":"B. Cox","simWin":17.12,"boardPct":52.99},{"post":8,"name":"Emerging Market","tw":"#FF1493","nm":"#000000","style":"EP","ability":101.8,"ml":"6-1","ml_dec":7,"jockey":"F. Prat","trainer":"C. Brown","simWin":15.83,"boardPct":51.26},{"post":9,"name":"Golden Tempo","tw":"#1FD9E8","nm":"#000000","style":"S","ability":101.0,"ml":"9-2","ml_dec":5.5,"jockey":"J. Ortiz","trainer":"C. DeVaux","simWin":4.97,"boardPct":18.52}];
+  const horseByPost = {}; horses.forEach(h => horseByPost[h.post] = h);
+  // --- v3.2: Real database of 10,000 sims (Option A) ---
+  let SIMS_DATA = null;
+  let currentSimIdx = null;
+  fetch('data/belmont/belmont_sims.json').then(r => r.json()).then(d => {
+    SIMS_DATA = d;
+    document.getElementById('dt-play').disabled = false;
+    const counterEl = document.getElementById('sim-counter');
+    if (counterEl) counterEl.textContent = d.sims.length.toLocaleString() + ' SIMS';
+  }).catch(e => {
+    console.error('Failed to load sims data:', e);
+    const counterEl = document.getElementById('sim-counter');
+    if (counterEl) counterEl.textContent = 'Failed to load';
+  });
+
+  const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+  const RACE_DURATION_BASE_MS = 32000;
+  let RACE_SPEED = 1; // 1 = normal, 2 = double
+  function raceDurationMs() { return RACE_DURATION_BASE_MS / RACE_SPEED; }
+
+  const W = 760, H = 300;
+  const cx = W / 2, cy = 150;
+  const L = 440, R = 110, ringWidth = 52;
+  // wireOffset places the FINISH wire about 70% across the homestretch (matching Sean's reference diagram)
+  const wireOffset = 88;
+  const halfL = L / 2;
+  const SEG = 60;
+  // Gate is at the TOP OF THE STRETCH (west end of homestretch / bottom-left corner of oval).
+  // 1¼ mile race: gate → east through homestretch (passing wire mid-race) → CCW around oval →
+  // back through homestretch → wire (final pass). CHUTE_LEN = gate-to-wire distance on first pass.
+  // 176 units ≈ 1/8 mile in actual race distance (1 1/4 race - 1 1/8 oval = 1/8 mile extra).
+  const CHUTE_LEN = 176;
+  // Small gallop-out extension past the wire so the freeze frame at finish has horses
+  // slightly past the wire (matches reality after the 4 finishers cross).
+  const EXTENSION = 0.08;
+  const RACE_PROG_MAX = 1 + EXTENSION;
+  // OVERRIDE CHUTE_LEN to position START at ~30% of homestretch (matching Sean's diagram).
+  // Homestretch spans from cx-halfL to cx+halfL (160 to 600). Wire at cx+88=468.
+  // Gate at ~30% from left = ~292. So gate-to-wire = 468-292 = 176.
+
+  function visiblePath() {
+    const wireX = cx + wireOffset, wireY = cy + R;
+    let d = `M ${wireX},${wireY} L ${cx + halfL},${cy + R}`;
+    for (let i = 1; i <= SEG; i++) { const t = (i / SEG) * Math.PI; d += ` L ${(cx + halfL + R * Math.sin(t)).toFixed(2)},${(cy + R * Math.cos(t)).toFixed(2)}`; }
+    d += ` L ${cx - halfL},${cy - R}`;
+    for (let i = 1; i <= SEG; i++) { const t = (i / SEG) * Math.PI; d += ` L ${(cx - halfL - R * Math.sin(t)).toFixed(2)},${(cy - R * Math.cos(t)).toFixed(2)}`; }
+    d += ` L ${wireX},${wireY}`;
+    return d;
+  }
+  function railPath(R_use) {
+    const wireX = cx + wireOffset, wireY = cy + R_use;
+    let d = `M ${wireX},${wireY} L ${cx + halfL},${cy + R_use}`;
+    for (let i = 1; i <= SEG; i++) { const t = (i / SEG) * Math.PI; d += ` L ${(cx + halfL + R_use * Math.sin(t)).toFixed(2)},${(cy + R_use * Math.cos(t)).toFixed(2)}`; }
+    d += ` L ${cx - halfL},${cy - R_use}`;
+    for (let i = 1; i <= SEG; i++) { const t = (i / SEG) * Math.PI; d += ` L ${(cx - halfL - R_use * Math.sin(t)).toFixed(2)},${(cy - R_use * Math.cos(t)).toFixed(2)}`; }
+    d += ` L ${wireX},${wireY}`;
+    return d;
+  }
+  function animPath() {
+    // Gate at top of stretch (bottom-left corner / west end of homestretch).
+    // Path: gate → east through homestretch (passing wire mid-race) → CCW around oval → wire (final pass).
+    // Then a small gallop-out east past the wire on the bottom rail.
+    const wireX = cx + wireOffset, wireY = cy + R;
+    const gateX = wireX - CHUTE_LEN;
+    let d = `M ${gateX},${wireY}`;
+    // East across bottom: gate → past wire → bottom-right corner
+    d += ` L ${cx + halfL},${cy + R}`;
+    // Clubhouse turn arc (right curve, CCW from bottom-right to top-right)
+    for (let i = 1; i <= SEG; i++) { const t = (i / SEG) * Math.PI; d += ` L ${(cx + halfL + R * Math.sin(t)).toFixed(2)},${(cy + R * Math.cos(t)).toFixed(2)}`; }
+    // Backstretch (top, east to west)
+    d += ` L ${cx - halfL},${cy - R}`;
+    // Far turn arc (left curve, CCW from top-left to bottom-left)
+    for (let i = 1; i <= SEG; i++) { const t = (i / SEG) * Math.PI; d += ` L ${(cx - halfL - R * Math.sin(t)).toFixed(2)},${(cy - R * Math.cos(t)).toFixed(2)}`; }
+    // Homestretch (second pass), bottom-left → wire
+    d += ` L ${wireX},${wireY}`;
+    // Gallop-out east past wire on bottom rail
+    const arcLen = Math.PI * R, loopLen = 2 * L + 2 * arcLen, wirePos = CHUTE_LEN + loopLen;
+    const extLen = EXTENSION * wirePos;
+    const distWireToRight = halfL - wireOffset;
+    if (extLen <= distWireToRight) {
+      d += ` L ${(wireX + extLen).toFixed(2)},${cy + R}`;
+    } else {
+      d += ` L ${cx + halfL},${cy + R}`;
+    }
+    return d;
+  }
+
+  let raf = null, simCount = 0, isRunning = false, lastSimState = null, currentSim = null;
+  const trackArea = document.getElementById('dt-track-area');
+  const toteEl = document.getElementById('dt-toteboard');
+  const playBtn = document.getElementById('dt-play');
+  const replayBtn = document.getElementById('dt-replay');
+  const leaderboardEl = document.getElementById('leaderboard');
+  const leaderboardRow = document.getElementById('dt-leaderboard-row');
+  const paceBadge = document.getElementById('pace-badge');
+  playBtn.addEventListener('click', () => { if (isRunning) return; cancelAnimationFrame(raf); runSim(false); });
+  replayBtn.addEventListener('click', () => { if (isRunning || !lastSimState) return; cancelAnimationFrame(raf); runSim(true); });
+  const speedBtn = document.getElementById('dt-speed');
+  if (speedBtn) {
+    speedBtn.addEventListener('click', () => {
+      RACE_SPEED = (RACE_SPEED === 1) ? 2 : 1;
+      speedBtn.textContent = RACE_SPEED + '×';
+      speedBtn.classList.toggle('fast', RACE_SPEED === 2);
+    });
+  }
+
+  function showTrack() {
+    toteEl.classList.remove('show');
+    toteEl.style.display = 'none';
+    trackArea.classList.remove('hidden');
+    leaderboardRow.classList.remove('hidden');
+    paceBadge.classList.remove('hidden');
+  }
+  function showToteSwap(html) {
+    trackArea.classList.add('hidden');
+    leaderboardRow.classList.add('hidden');
+    paceBadge.classList.add('hidden');
+    toteEl.innerHTML = html;
+    toteEl.style.display = 'block';
+    requestAnimationFrame(() => toteEl.classList.add('show'));
+  }
+  function showSkipLink() { const s = document.getElementById('skip-link'); if (s) s.classList.add('show'); }
+  function hideSkipLink() { const s = document.getElementById('skip-link'); if (s) s.classList.remove('show'); }
+
+  function renderTrack() {
+    let svg = `<svg width="100%" viewBox="0 0 ${W} ${H}" role="img"><title>Belmont Stakes simulator track</title><desc>Saratoga oval with Belmont Stakes 2026 branding and 1 1/4 mile race diagram in the infield.</desc>`;
+
+    // === Belmont track design: green grass surround + dirt running surface + white inner rail + green infield ===
+    // 1) Light-green grass background (full canvas)
+    svg += `<rect x="0" y="0" width="${W}" height="${H}" fill="#c8dcc0"/>`;
+    // 2) Darker green band around the oval (the "track surround" turf)
+    svg += `<path d="${railPath(R + ringWidth/2 + 14)}" fill="#2d6a3f" stroke="none"/>`;
+    // 3) Dirt running surface (tan)
+    svg += `<path d="${visiblePath()}" fill="none" stroke="#b08552" stroke-width="${ringWidth}" stroke-linejoin="round"/>`;
+    // 4) Subtle dirt texture overlay (lighter speckle)
+    svg += `<path d="${visiblePath()}" fill="none" stroke="rgba(196,149,95,0.4)" stroke-width="${ringWidth - 4}" stroke-linejoin="round" stroke-dasharray="0.5,1.5"/>`;
+    // 5) Outer rail (subtle dark)
+    svg += `<path d="${railPath(R + ringWidth/2)}" fill="none" stroke="#0d3318" stroke-width="1.2" stroke-linejoin="round"/>`;
+    // 6) Inner rail (WHITE — the iconic infield rail)
+    svg += `<path d="${railPath(R - ringWidth/2)}" fill="#2d6a3f" stroke="#FFFFFF" stroke-width="1.5" stroke-linejoin="round"/>`;
+    // 7) Animation path (invisible)
+    svg += `<path id="anim-path" d="${animPath()}" fill="none" stroke="none"/>`;
+
+    // === Belmont Stakes 2026 infield logo panel ===
+    const logoW = 280, logoH = 110;
+    const logoX = cx - logoW/2, logoY = cy - logoH/2 - 10;
+    svg += `<g>`;
+    svg += `<rect x="${logoX}" y="${logoY}" width="${logoW}" height="${logoH}" rx="7" fill="#0a4029" stroke="#c7a654" stroke-width="2" opacity="0.97"/>`;
+    svg += `<text x="${cx}" y="${cy - 30}" text-anchor="middle" font-size="18" font-family="Georgia, serif" letter-spacing="3" font-weight="700" fill="#ffffff">BELMONT</text>`;
+    svg += `<text x="${cx}" y="${cy - 9}" text-anchor="middle" font-size="18" font-family="Georgia, serif" letter-spacing="3" font-weight="700" fill="#ffffff">STAKES</text>`;
+    // Saratoga banner
+    svg += `<rect x="${cx - 62}" y="${cy + 2}" width="124" height="20" rx="3" fill="#c7a654"/>`;
+    svg += `<text x="${cx}" y="${cy + 16}" text-anchor="middle" font-size="12" font-family="Georgia, serif" letter-spacing="3.5" font-weight="700" fill="#0a4029">SARATOGA</text>`;
+    // Year tags
+    svg += `<text x="${cx - 115}" y="${cy + 28}" text-anchor="middle" font-size="11" font-family="Georgia, serif" letter-spacing="1" font-weight="700" fill="#c7a654">20</text>`;
+    svg += `<text x="${cx + 115}" y="${cy + 28}" text-anchor="middle" font-size="11" font-family="Georgia, serif" letter-spacing="1" font-weight="700" fill="#c7a654">26</text>`;
+    svg += `</g>`;
+
+    // Distance label below the logo
+    svg += `<text x="${cx}" y="${cy + 42}" text-anchor="middle" font-size="11" fill="#c7a654" font-family="-apple-system, sans-serif" letter-spacing="3" font-weight="700">1 1/4 MILES · 158TH RUNNING</text>`;
+
+    svg += `</svg>`;
+    const overlays = `
+      <div class="gate-bell" id="gate-bell">BELL!</div>
+      <div class="photo-finish" id="photo-finish">PHOTO</div>
+      <div class="winner-flash" id="winner-flash">
+        <span class="winner-emoji">💎</span>
+        <span class="winner-label">WINNER</span>
+        <span class="winner-name-row">
+          <span class="winner-silk" id="winner-silk"></span>
+          <span id="winner-name-text"></span>
+        </span>
+      </div>
+      <div class="skip-link" id="skip-link">Skip ▶▶</div>
+    `;
+    trackArea.innerHTML = svg + overlays;
+    document.getElementById('skip-link').addEventListener('click', skipRace);
+
+    const pathEl = document.getElementById('anim-path');
+    const visTotal = pathEl.getTotalLength() / RACE_PROG_MAX;
+    const svgEl = trackArea.querySelector('svg');
+    const NS = 'http://www.w3.org/2000/svg';
+
+    function tickAt(loopFrac, label, opts) {
+      opts = opts || {};
+      // Tick positions are along the LOOP (after the chute prefix). Skip the chute.
+      const len = CHUTE_LEN + loopFrac * (visTotal - CHUTE_LEN);
+      const pt = pathEl.getPointAtLength(len);
+      const ahead = pathEl.getPointAtLength(Math.min(pathEl.getTotalLength(), len + 1));
+      const dx = ahead.x - pt.x, dy = ahead.y - pt.y;
+      const mag = Math.sqrt(dx*dx + dy*dy) || 1;
+      const innerNX = dy / mag, innerNY = -dx / mag;
+      const halfW = ringWidth/2 - 2;
+      const inner = { x: pt.x + innerNX * halfW, y: pt.y + innerNY * halfW };
+      const outer = { x: pt.x - innerNX * halfW, y: pt.y - innerNY * halfW };
+      const line = document.createElementNS(NS, 'line');
+      line.setAttribute('x1', inner.x); line.setAttribute('y1', inner.y);
+      line.setAttribute('x2', outer.x); line.setAttribute('y2', outer.y);
+      line.setAttribute('stroke', opts.thick ? '#1a1a1a' : 'rgba(255,255,255,0.85)');
+      line.setAttribute('stroke-width', opts.thick ? '2.6' : '1.5');
+      svgEl.appendChild(line);
+      if (opts.thick) {
+        const overlay = document.createElementNS(NS, 'line');
+        overlay.setAttribute('x1', inner.x); overlay.setAttribute('y1', inner.y);
+        overlay.setAttribute('x2', outer.x); overlay.setAttribute('y2', outer.y);
+        overlay.setAttribute('stroke', 'rgba(255,255,255,0.6)'); overlay.setAttribute('stroke-width', '0.8'); overlay.setAttribute('stroke-dasharray', '3,3');
+        svgEl.appendChild(overlay);
+      }
+      const dot = document.createElementNS(NS, 'circle');
+      dot.setAttribute('cx', pt.x + innerNX * (ringWidth/2 + 6));
+      dot.setAttribute('cy', pt.y + innerNY * (ringWidth/2 + 6));
+      dot.setAttribute('r', '2.5');
+      dot.setAttribute('fill', opts.thick ? '#c7a654' : '#ffffff');
+      dot.setAttribute('stroke', '#0a4029');
+      dot.setAttribute('stroke-width', '0.5');
+      svgEl.appendChild(dot);
+      const text = document.createElementNS(NS, 'text');
+      text.setAttribute('x', pt.x + innerNX * (ringWidth/2 + (opts.thick ? 22 : 16)));
+      text.setAttribute('y', pt.y + innerNY * (ringWidth/2 + (opts.thick ? 22 : 16)) + 4);
+      text.setAttribute('text-anchor', 'middle');
+      text.setAttribute('font-size', opts.thick ? '12' : '11');
+      text.setAttribute('font-weight', opts.thick ? '700' : '500');
+      text.setAttribute('fill', opts.thick ? '#c7a654' : '#ffffff');
+      text.setAttribute('font-family', 'var(--font-sans)');
+      text.textContent = label;
+      svgEl.appendChild(text);
+    }
+    tickAt(0.0001, 'FINISH', { thick: true });
+    tickAt(0.20, '1/4', {});
+    tickAt(0.40, '1/2', {});
+    tickAt(0.60, '3/4', {});
+    tickAt(0.80, '1/8', {});
+
+    // Gate marker — small tick + label at gate position (CHUTE_LEN west of wire on bottom rail)
+    {
+      const wireX = cx + wireOffset;
+      const gateX = wireX - CHUTE_LEN;
+      const gateY = cy + R;
+      const inner = { x: gateX, y: gateY - (ringWidth/2 - 2) };
+      const outer = { x: gateX, y: gateY + (ringWidth/2 - 2) };
+      const line = document.createElementNS(NS, 'line');
+      line.setAttribute('x1', inner.x); line.setAttribute('y1', inner.y);
+      line.setAttribute('x2', outer.x); line.setAttribute('y2', outer.y);
+      line.setAttribute('stroke', 'rgba(255,255,255,0.85)');
+      line.setAttribute('stroke-width', '1.8');
+      line.setAttribute('stroke-dasharray', '3,2');
+      svgEl.appendChild(line);
+      const text = document.createElementNS(NS, 'text');
+      text.setAttribute('x', gateX);
+      text.setAttribute('y', gateY + ringWidth/2 + 12);
+      text.setAttribute('text-anchor', 'middle');
+      text.setAttribute('font-size', '11');
+      text.setAttribute('font-weight', '700');
+      text.setAttribute('fill', '#c7a654');
+      text.setAttribute('font-family', 'var(--font-sans)');
+      text.textContent = 'START';
+      svgEl.appendChild(text);
+    }
+
+    horses.forEach((h, i) => {
+      const g = document.createElementNS(NS, 'g');
+      g.setAttribute('class', 'horse-h');
+      g.setAttribute('data-i', i);
+      g.setAttribute('data-post', h.post);
+      g.style.cursor = 'help';
+      const rect = document.createElementNS(NS, 'rect');
+      rect.setAttribute('x', '-7'); rect.setAttribute('y', '-7');
+      rect.setAttribute('width', '14'); rect.setAttribute('height', '14');
+      rect.setAttribute('rx', '2'); rect.setAttribute('fill', h.tw);
+      rect.setAttribute('stroke', '#1a1a1a'); rect.setAttribute('stroke-width', '0.6');
+      g.appendChild(rect);
+      const text = document.createElementNS(NS, 'text');
+      text.setAttribute('y', '3'); text.setAttribute('text-anchor', 'middle');
+      text.setAttribute('font-size', '8'); text.setAttribute('font-weight', '500');
+      text.setAttribute('fill', h.nm); text.setAttribute('font-family', 'var(--font-sans)'); text.style.pointerEvents = 'none';
+      text.textContent = h.post;
+      g.appendChild(text);
+      svgEl.appendChild(g);
+    });
+    placeAll(horses.map(() => 0));
+    setupTooltips();
+    showLeaderboardPlaceholder();
+  }
+
+  function placeAll(progresses) {
+    const path = document.getElementById('anim-path');
+    if (!path) return;
+    const total = path.getTotalLength();
+    horses.forEach((h, i) => {
+      const raceProg = Math.max(0, Math.min(RACE_PROG_MAX, progresses[i]));
+      const pathFrac = raceProg / RACE_PROG_MAX;
+      const len = pathFrac * total;
+      const pt = path.getPointAtLength(len);
+      const ahead = path.getPointAtLength(Math.min(total, len + 1));
+      const dx = ahead.x - pt.x, dy = ahead.y - pt.y;
+      const mag = Math.sqrt(dx*dx + dy*dy) || 1;
+      const innerNX = dy / mag, innerNY = -dx / mag;
+      // Lane offset scales to the actual field size (14 for Preakness, not 20).
+      const N = horses.length;
+      const mid = (N - 1) / 2;
+      const offsetFromMid = (i - mid) / Math.max(mid, 1);
+      const laneOffset = -offsetFromMid * 9;  // tighter spread than Derby's 14
+      const x = pt.x + innerNX * laneOffset;
+      const y = pt.y + innerNY * laneOffset;
+      const el = document.querySelector(`.horse-h[data-i="${i}"]`);
+      if (el) el.setAttribute('transform', `translate(${x.toFixed(2)}, ${y.toFixed(2)})`);
+    });
+  }
+
+  function paceCurve(style, t) {
+    if (style === 'E') return t < 0.7 ? (t/0.7) * 0.76 : 0.76 + ((t-0.7)/0.3) * 0.24;
+    if (style === 'EP') return t < 0.6 ? (t/0.6) * 0.64 : 0.64 + ((t-0.6)/0.4) * 0.36;
+    if (style === 'S') return t < 0.5 ? (t/0.5) * 0.45 : 0.45 + ((t-0.5)/0.5) * 0.55;
+    return t;
+  }
+
+  function clearScript() { document.getElementById('race-script').innerHTML = ''; }
+  function postCall(phase, text, opts) {
+    opts = opts || {};
+    const log = document.getElementById('race-script');
+    const empty = log.querySelector('.race-script-empty');
+    if (empty) empty.remove();
+    const prevNewest = log.querySelector('.script-entry.is-newest');
+    if (prevNewest) prevNewest.classList.remove('is-newest');
+    const entry = document.createElement('div');
+    entry.className = 'script-entry is-newest' + (opts.wire ? ' wire' : '');
+    entry.innerHTML = `<div class="script-phase">${phase}</div><div class="script-text">${text}</div>`;
+    log.insertBefore(entry, log.firstChild);
+  }
+
+  function generateCall(key, ctx, lockedTextMap) {
+    if (lockedTextMap && lockedTextMap[key]) return lockedTextMap[key];
+    const { sortedNow, paceShape, finishOrder } = ctx;
+    const f = (h) => `#${h.post} ${h.name}`;
+    const leader = sortedNow[0], second = sortedNow[1], third = sortedNow[2];
+    let result = '';
+    switch(key) {
+      case 'start':
+        result = pick([
+          "They're off in the 158th Belmont Stakes!",
+          "They're away in the Run at Saratoga!",
+          "And they break cleanly. The 158th Belmont Stakes is underway!"
+        ]); break;
+      case 'breaking': {
+        const verb = pick(['breaks on top', 'gets first jump', 'hustles up to claim the front', 'shows the way early']);
+        const stalk = pick(['pressing wide', 'tracking from second', 'lying just off the leader']);
+        result = `${f(leader)} ${verb}, ${f(second)} ${stalk}, ${f(third)} settled into a stalking trip`;
+        break;
+      }
+      case 'firstcall': {
+        let pace;
+        if (paceShape === 'fast') pace = pick(['blistering opening fractions', 'a contested early pace', 'a torrid early tempo']);
+        else if (paceShape === 'slow') pace = pick(['unhurried fractions', 'a soft early tempo', 'a walking lead']);
+        else pace = pick(['honest fractions', 'a moderate early pace']);
+        result = `Past the quarter pole with ${pace}. Up close are ${f(leader)}, ${f(second)}, and ${f(third)}.`;
+        break;
+      }
+      case 'halfmile':
+        result = pick([
+          `Through the half, ${f(leader)} dictating terms with ${f(second)} stalking and ${f(third)} along the rail`,
+          `Halfway home, ${f(leader)} on the lead under a hand ride; ${f(second)} stalking patiently`,
+          `Past the half-mile, ${f(leader)} still on top, ${f(second)} tracking close`
+        ]); break;
+      case 'threequarters':
+        result = pick([
+          `After three-quarters, ${f(leader)} clear; ${f(second)} sweeping four-wide on the outside`,
+          `The pace begins to take its toll. ${f(second)} rolling, taking dead aim at ${f(leader)}`,
+          `Three-quarters in, ${f(leader)} starting to feel the heat; ${f(second)} looming menacingly, ${f(third)} digging in`
+        ]); break;
+      case 'stretch':
+        result = pick([
+          `Into the stretch! ${f(leader)} and ${f(second)} locked in a furious duel; ${f(third)} closing under a vigorous ride`,
+          `Down the lane, ${f(leader)} digging in stubbornly; ${f(second)} drawing alongside, refusing to yield`,
+          `Top of the stretch. ${f(leader)} battling, ${f(second)} wearing him down, ${f(third)} looming dangerously`
+        ]); break;
+      case 'wire': {
+        const winner = finishOrder[0];
+        const margin1 = finishOrder[1].lengthsBehind - winner.lengthsBehind;
+        let style;
+        if (margin1 < 0.25) style = pick(['in a desperate driving photo', 'by a head bob']);
+        else if (margin1 < 0.85) style = pick(['gamely under the wire', 'getting up just in time', 'in deep stretch']);
+        else if (margin1 < 2.0) style = pick(['with authority', 'in command', 'comfortably']);
+        else style = pick(['going away', 'kicking on impressively', 'drawing off']);
+        result = `${winner.name.toUpperCase()} wins the 158th Belmont Stakes ${style}!`;
+        break;
+      }
+    }
+    if (lockedTextMap) lockedTextMap[key] = result;
+    return result;
+  }
+
+  function showLeaderboardPlaceholder() {
+    leaderboardEl.innerHTML = `<span class="leaderboard-title">RUNNING ORDER</span><span class="leaderboard-placeholder">— — — —</span>`;
+  }
+  function updateLeaderboard(sortedNow, label) {
+    label = label || 'RUNNING ORDER';
+    const items = sortedNow.slice(0,4).map((entry, i) => {
+      const h = horseByPost[entry.post];
+      return `<span class="leaderboard-item"><span class="leaderboard-pos">${i+1}</span><span class="lb-silk" data-post="${h.post}" style="background:${h.tw};color:${h.nm};">${h.post}</span><span class="leaderboard-name">${h.name}</span></span>`;
+    }).join('');
+    leaderboardEl.innerHTML = `<span class="leaderboard-title">${label}</span>${items}`;
+  }
+
+  function updatePaceBadge(shape) {
+    paceBadge.classList.remove('pace-fast','pace-honest','pace-slow');
+    if (shape) {
+      paceBadge.classList.add('pace-' + shape);
+      paceBadge.querySelector('.pace-badge-val').textContent = shape.toUpperCase();
+    } else {
+      paceBadge.querySelector('.pace-badge-val').textContent = '—';
+    }
+  }
+  function ringBell() { const b = document.getElementById('gate-bell'); if (b) { b.classList.add('show'); setTimeout(() => b.classList.remove('show'), 600); } }
+  function showPhotoFinish() {
+    return new Promise(resolve => {
+      const pf = document.getElementById('photo-finish'); if (!pf) { resolve(); return; }
+      pf.classList.add('show');
+      setTimeout(() => { pf.classList.remove('show'); resolve(); }, 1300);
+    });
+  }
+  function showWinnerFlash(winner) {
+    return new Promise(resolve => {
+      const flash = document.getElementById('winner-flash'); if (!flash) { resolve(); return; }
+      const silk = document.getElementById('winner-silk');
+      silk.textContent = winner.post;
+      silk.style.background = winner.tw;
+      silk.style.color = winner.nm;
+      document.getElementById('winner-name-text').textContent = winner.name.toUpperCase();
+      flash.classList.add('show');
+      setTimeout(() => { flash.classList.remove('show'); resolve(); }, 2500);
+    });
+  }
+  function samplePaceShape() { const r = Math.random(); if (r < 0.65) return 'fast'; if (r < 0.95) return 'honest'; return 'slow'; }
+
+  // Trip-trouble lottery for 9-horse field. Each horse can hit at most one event per sim.
+  function applyTripEvents(h) {
+    let draw = h.ability + (Math.random()-0.5)*22;
+    let tripNote = null;
+    const r = Math.random();
+    // 8% bad break (anyone)
+    if (r < 0.08) {
+      draw -= 12 + Math.random() * 8;
+      tripNote = 'broke poorly';
+    }
+    // E/EP from outside posts trying to clear (tougher trip than just wide)
+    else if ((h.style === 'E' || h.style === 'EP') && h.post >= 8 && Math.random() < 0.20) {
+      draw -= 6 + Math.random() * 6;
+      tripNote = 'used up clearing from outside';
+    }
+    // Outside posts (15-20) get hung wide
+    else if (h.post >= 8 && Math.random() < 0.20) {
+      draw -= 5 + Math.random() * 5;
+      tripNote = 'caught wide';
+    }
+    // Inside posts (1-3) get boxed in / shut off
+    else if (h.post <= 2 && Math.random() < 0.12) {
+      draw -= 4 + Math.random() * 4;
+      tripNote = 'boxed in';
+    }
+    return { ...h, draw, tripNote };
+  }
+
+  function fmtMargin(lengths) {
+    if (lengths < 0.05) return 'nose';
+    if (lengths < 0.20) return 'head';
+    if (lengths < 0.35) return 'neck';
+    if (lengths < 0.65) return '1/2 length';
+    if (lengths < 0.90) return '3/4 length';
+    if (lengths < 1.15) return '1 length';
+    const whole = Math.floor(lengths);
+    const frac = lengths - whole;
+    if (frac < 0.125) return `${whole} lengths`;
+    if (frac < 0.375) return `${whole}¼ lengths`;
+    if (frac < 0.625) return `${whole}½ lengths`;
+    if (frac < 0.875) return `${whole}¾ lengths`;
+    return `${whole + 1} lengths`;
+  }
+
+  function setupTooltips() {
+    const tooltip = document.getElementById('horse-tooltip');
+    const dtRoot = document.querySelector('.dt');
+    function isHoverable(target) {
+      let el = target;
+      while (el && el !== document) {
+        if (el.dataset && el.dataset.post !== undefined) return el;
+        el = el.parentNode;
+      }
+      return null;
+    }
+    function showTip(post, evt) {
+      const h = horseByPost[post]; if (!h) return;
+      const r = dtRoot.getBoundingClientRect();
+      tooltip.innerHTML = `
+        <div class="tip-name"><span class="lb-silk" style="background:${h.tw};color:${h.nm};">${h.post}</span>${h.name}</div>
+        <div class="tip-row"><span class="tip-lbl">ML</span><span>${h.ml}</span></div>
+        <div class="tip-row"><span class="tip-lbl">Jockey</span><span>${h.jockey}</span></div>
+        <div class="tip-row"><span class="tip-lbl">Trainer</span><span>${h.trainer}</span></div>
+        <div class="tip-row"><span class="tip-lbl">Sim win</span><span>${h.simWin.toFixed(1)}%</span></div>
+        <div class="tip-row"><span class="tip-lbl">Hits board</span><span>${h.boardPct.toFixed(1)}%</span></div>
+      `;
+      let left = evt.clientX - r.left + 14, top = evt.clientY - r.top + 14;
+      if (left + 230 > r.width) left = evt.clientX - r.left - 240;
+      tooltip.style.left = left + 'px'; tooltip.style.top = top + 'px';
+      tooltip.classList.add('show');
+    }
+    function hideTip() { tooltip.classList.remove('show'); }
+    document.addEventListener('mouseover', (e) => { const t = isHoverable(e.target); if (t) showTip(parseInt(t.dataset.post, 10), e); });
+    document.addEventListener('mousemove', (e) => {
+      const t = isHoverable(e.target);
+      if (!t) { hideTip(); return; }
+      const r = dtRoot.getBoundingClientRect();
+      let left = e.clientX - r.left + 14, top = e.clientY - r.top + 14;
+      if (left + 230 > r.width) left = e.clientX - r.left - 240;
+      tooltip.style.left = left + 'px'; tooltip.style.top = top + 'px';
+      tooltip.classList.add('show');
+    });
+    document.addEventListener('mouseout', (e) => { const t = isHoverable(e.target), rl = isHoverable(e.relatedTarget); if (t && !rl) hideTip(); });
+  }
+
+  function skipRace() {
+    if (!isRunning || !currentSim || currentSim.postRaceTriggered) return;
+    currentSim.postRaceTriggered = true;
+    currentSim.frozen = true;
+    if (raf) { cancelAnimationFrame(raf); raf = null; }
+    hideSkipLink();
+    while (currentSim.phaseIdx < currentSim.phases.length) {
+      const ph = currentSim.phases[currentSim.phaseIdx];
+      postCall(ph.label, generateCall(ph.key, { sortedNow: currentSim.sorted, paceShape: currentSim.paceShape, finishOrder: currentSim.sorted }, currentSim.lockedCalls));
+      currentSim.phaseIdx++;
+    }
+    postCall('WIRE', generateCall('wire', { sortedNow: currentSim.sorted, paceShape: currentSim.paceShape, finishOrder: currentSim.sorted }, currentSim.lockedCalls), { wire: true });
+    updatePaceBadge(currentSim.paceShape);
+    runPostRaceSequence(currentSim.sorted, currentSim.paceShape, currentSim.isPhotoFinish, true);
+  }
+
+  async function runSim(replay) {
+    isRunning = true;
+    playBtn.disabled = true;
+    replayBtn.disabled = true;
+    showTrack();
+    updatePaceBadge(null);
+    clearScript();
+
+    let paceShape, sorted, factorByPost, noiseByPost, lbByPost, fourthLB, isPhotoFinish, fourthFinishTime, lockedCalls;
+
+    if (replay && lastSimState) {
+      paceShape = lastSimState.paceShape;
+      sorted = lastSimState.sorted;
+      factorByPost = lastSimState.factorByPost;
+      noiseByPost = lastSimState.noiseByPost;
+      lbByPost = lastSimState.lbByPost;
+      fourthLB = lastSimState.fourthLB;
+      isPhotoFinish = lastSimState.isPhotoFinish;
+      fourthFinishTime = lastSimState.fourthFinishTime;
+      lockedCalls = lastSimState.lockedCalls;
+    } else {
+      // v3.4: Pick a random sim from the 10K database, update counter IMMEDIATELY
+      // v3.13: Honor ?sim=N URL param (1-indexed for human friendliness) for deep-linking,
+      //        and ?pace=fast|honest|slow to force a specific pace shape.
+      //        The forced sim/pace only applies on the FIRST play; "NEW SIM" goes random again.
+      const _qp = new URLSearchParams(window.location.search);
+      const _forcedSim = (_qp.get('sim') !== null && !window._sim_used_url) ? parseInt(_qp.get('sim'), 10) - 1 : null;
+      const _forcedPace = (_qp.get('pace') && !window._sim_used_url) ? _qp.get('pace') : null;
+      window._sim_used_url = true;
+      if (_forcedSim !== null && _forcedSim >= 0 && _forcedSim < SIMS_DATA.sims.length) {
+        currentSimIdx = _forcedSim;
+      } else {
+        currentSimIdx = Math.floor(Math.random() * SIMS_DATA.sims.length);
+      }
+      const _ctr = document.getElementById('sim-counter');
+      if (_ctr) _ctr.textContent = 'SIM ' + (currentSimIdx + 1).toLocaleString() + ' / ' + SIMS_DATA.sims.length.toLocaleString();
+      const lockedFinish = SIMS_DATA.sims[currentSimIdx];
+      paceShape = (_forcedPace === 'fast' || _forcedPace === 'honest' || _forcedPace === 'slow')
+                    ? _forcedPace
+                    : samplePaceShape();
+      sorted = lockedFinish.map((post, rank) => {
+        const h = horseByPost[post];
+        // Generate trip narrative from style+post (for storytelling, not finish order)
+        let tripNote = null;
+        const r = Math.random();
+        if (r < 0.05) tripNote = 'broke poorly';
+        else if ((h.style === 'E' || h.style === 'EP') && h.post >= 15 && Math.random() < 0.3) tripNote = 'used up clearing from outside';
+        else if (h.post >= 8 && Math.random() < 0.20) tripNote = 'caught wide';
+        else if (h.post <= 3 && Math.random() < 0.06 && h.style === 'P') tripNote = 'boxed in';
+        return { ...h, rank: rank, tripNote: tripNote, draw: 100 - rank };
+      });
+      const N = sorted.length;
+      // lengthsBehind set below — set it first so factor can reference it
+      sorted.forEach((d, i) => {
+        if (i === 0) d.lengthsBehind = 0;
+        else d.lengthsBehind = Math.pow(i, 0.85) * 0.55 + Math.random() * 0.4;
+      });
+      for (let i = 1; i < N; i++) {
+        if (sorted[i].lengthsBehind <= sorted[i-1].lengthsBehind) sorted[i].lengthsBehind = sorted[i-1].lengthsBehind + 0.3;
+      }
+      // Factor: top 4 derived from lengthsBehind (so gallop-out at racing speed lands at correct lengths past wire)
+      // Back of field: smooth convex extension from rank-3 factor to 1.0 (preserves stretch spread)
+      // T_PER_LENGTH is scaled ~6x physical so finishers separate clearly on the stylized SVG
+      const T_PER_LENGTH = 0.007;
+      const baseFactor = 0.87;
+      const f3 = baseFactor + sorted[3].lengthsBehind * T_PER_LENGTH;
+      sorted.forEach((d, rank) => {
+        if (rank <= 3) {
+          d.raceTimeFactor = baseFactor + d.lengthsBehind * T_PER_LENGTH;
+        } else {
+          const u = (rank - 3) / (N - 1 - 3);
+          d.raceTimeFactor = f3 + (1 - f3) * Math.pow(u, 1.5);
+        }
+      });
+      factorByPost = {};
+      sorted.forEach(d => { factorByPost[d.post] = d.raceTimeFactor; });
+      // Per-horse jockeying noise (subtle position trading during body of race)
+      noiseByPost = {};
+      sorted.forEach(d => {
+        noiseByPost[d.post] = {
+          f1: 1.4 + Math.random() * 0.7,
+          f2: 2.6 + Math.random() * 1.1,
+          p1: Math.random() * Math.PI * 2,
+          p2: Math.random() * Math.PI * 2,
+          amp: 0.0032 + Math.random() * 0.0022
+        };
+      });
+      // lbByPost retained (no longer used in frame, but available for cache/replay)
+      lbByPost = {};
+      sorted.forEach(d => { lbByPost[d.post] = d.lengthsBehind; });
+      simCount++;
+      isPhotoFinish = sorted[1].lengthsBehind < 0.55;
+      fourthFinishTime = sorted[3].raceTimeFactor;
+      fourthLB = sorted[3].lengthsBehind;
+      lockedCalls = {};
+      lastSimState = { paceShape, sorted, factorByPost, noiseByPost, lbByPost, fourthLB, isPhotoFinish, fourthFinishTime, lockedCalls };
+    }
+
+    const phases = [
+      { t: 0.02, key: 'start',         label: 'AT THE START' },
+      { t: 0.10, key: 'breaking',      label: 'OUT OF THE GATE' },
+      { t: 0.22, key: 'firstcall',     label: '1/4 POLE' },
+      { t: 0.42, key: 'halfmile',      label: '1/2 MILE' },
+      { t: 0.62, key: 'threequarters', label: '3/4 MILE' },
+      { t: 0.82, key: 'stretch',       label: 'STRETCH' }
+    ];
+
+    currentSim = { sorted, paceShape, factorByPost, isPhotoFinish, fourthFinishTime, lockedCalls, phases, phaseIdx: 0, frozen: false, postRaceTriggered: false };
+
+    let paceShown = false, wireLogged = false;
+    ringBell();
+    showSkipLink();
+
+    const start = performance.now();
+    let lastLb = 0;
+
+    function frame(now) {
+      if (currentSim.frozen) return;
+      const t = Math.min(1, (now - start) / raceDurationMs());
+      // stretchWeight: 0 early (everyone bunched), ramps to 1 by t=0.8 (full factor effect by stretch)
+      const swRaw = Math.max(0, Math.min(1, (t - 0.4) / 0.4));
+      const stretchWeight = swRaw * swRaw * (3 - 2 * swRaw); // smoothstep
+      const progresses = horses.map(h => {
+        const factor = factorByPost[h.post];
+        // Effective time blends uniform-pace early with full factor effect in stretch
+        const effT = t * (1 + (1/factor - 1) * stretchWeight);
+        let prog;
+        if (effT <= 1.0) {
+          prog = paceCurve(h.style, effT);
+        } else {
+          // Past wire: continue at racing speed (1/factor). With factor derived from lengthsBehind for top 4,
+          // visual position past wire = lengthsBehind exactly at freeze time.
+          prog = Math.min(1 + EXTENSION, effT);
+        }
+        // Jockeying noise: subtle smooth oscillation, peaks mid-race, fades at gate/wire
+        const n = noiseByPost && noiseByPost[h.post];
+        if (n && prog > 0.02 && prog < 0.97) {
+          const edgeFade = Math.min(1, (prog - 0.02) / 0.1) * Math.min(1, (0.97 - prog) / 0.12);
+          const jitter = (
+            Math.sin(t * n.f1 * 6.2832 + n.p1) +
+            Math.sin(t * n.f2 * 6.2832 + n.p2) * 0.7
+          ) * n.amp * edgeFade;
+          prog += jitter;
+        }
+        return prog;
+      });
+      placeAll(progresses);
+
+      if (now - lastLb > 120) {
+        const order = horses.map((h, i) => ({ post: h.post, prog: progresses[i] })).sort((a,b) => b.prog - a.prog);
+        updateLeaderboard(order, 'RUNNING ORDER');
+        lastLb = now;
+      }
+
+      while (currentSim.phaseIdx < phases.length && t >= phases[currentSim.phaseIdx].t) {
+        const ph = phases[currentSim.phaseIdx];
+        const order = horses.map((h, i) => ({ post: h.post, prog: progresses[i] })).sort((a,b) => b.prog - a.prog).map(o => ({ post: o.post, name: horseByPost[o.post].name }));
+        postCall(ph.label, generateCall(ph.key, { sortedNow: order, paceShape, finishOrder: sorted }, lockedCalls));
+        currentSim.phaseIdx++;
+      }
+
+      if (!paceShown) {
+        const leaderProgress = Math.max.apply(null, progresses);
+        if (leaderProgress >= 0.20) { updatePaceBadge(paceShape); paceShown = true; }
+      }
+
+      if (!currentSim.postRaceTriggered && t >= fourthFinishTime) {
+        currentSim.postRaceTriggered = true;
+        currentSim.frozen = true;
+        if (raf) { cancelAnimationFrame(raf); raf = null; }
+        hideSkipLink();
+        if (!wireLogged) {
+          postCall('WIRE', generateCall('wire', { sortedNow: sorted, paceShape, finishOrder: sorted }, lockedCalls), { wire: true });
+          wireLogged = true;
+        }
+        runPostRaceSequence(sorted, paceShape, isPhotoFinish, false);
+        return;
+      }
+
+      if (t < 1) raf = requestAnimationFrame(frame);
+    }
+    raf = requestAnimationFrame(frame);
+  }
+
+  async function runPostRaceSequence(sortedFinish, paceShape, isPhotoFinish, skipped) {
+    if (!skipped) await sleep(1500);
+    if (isPhotoFinish && !skipped) await showPhotoFinish();
+    await showWinnerFlash(sortedFinish[0]);
+    swapToToteboard(sortedFinish, paceShape);
+    isRunning = false;
+    playBtn.disabled = false;
+    replayBtn.disabled = false;
+  }
+
+  function fmtMoney(x) { return '$' + x.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+  function fmtOdds(ml) { return ml.replace('-', '/'); }
+
+  // v3.14 — Pool-anchored exotic payouts with live auto-update.
+  // sim.html fetches data/preakness_pool.json (refreshed every ~5min by a GitHub
+  // Action that scrapes NYRA Bets) and uses the live exacta matrix + Plackett-Luce
+  // strengths for $2 EX (direct lookup), $1 TRI (PL extension), $1 SUPER (PL extension).
+  // The bundled values below are the fallback if the fetch fails or the JSON is stale.
+  let POOL_DATA = {"strengths":{"12":0.2371,"2":0.1998,"1":0.1124,"9":0.0902,"5":0.0849,"10":0.0767,"6":0.0725,"14":0.0489,"7":0.0306,"11":0.0175,"4":0.0105,"13":0.0104,"3":0.0056,"8":0.0029},"ex_factor":0.78,"tri_factor":0.65,"super_factor":0.55};
+  let POOL_EXACTA = {"1-2":30.83,"1-3":1099.91,"1-4":586.62,"1-5":72.55,"1-6":84.96,"1-7":201.29,"1-8":2123.97,"1-9":68.29,"1-10":80.31,"1-11":351.97,"1-12":25.98,"1-13":592.26,"1-14":125.96,"2-1":27.79,"2-3":557.84,"2-4":297.51,"2-5":36.8,"2-6":43.09,"2-7":102.09,"2-8":1077.21,"2-9":34.63,"2-10":40.73,"2-11":178.51,"2-12":13.18,"2-13":300.38,"2-14":63.88,"3-1":1232.26,"3-2":693.22,"3-4":13191.02,"3-5":1631.4,"3-6":1910.42,"3-7":4526.33,"3-8":47760.59,"3-9":1535.54,"3-10":1805.81,"3-11":7914.61,"3-12":584.17,"3-13":13317.86,"3-14":2832.43,"4-1":653.97,"4-2":367.9,"4-3":13126.02,"4-5":865.79,"4-6":1013.87,"4-7":2402.15,"4-8":25346.8,"4-9":814.92,"4-10":958.35,"4-11":4200.33,"4-12":310.02,"4-13":7067.86,"4-14":1503.18,"5-1":74.8,"5-2":42.08,"5-3":1501.3,"5-4":800.69,"5-6":115.96,"5-7":274.75,"5-8":2899.06,"5-9":93.21,"5-10":109.61,"5-11":480.42,"5-12":35.46,"5-13":808.39,"5-14":171.93,"6-1":88.78,"6-2":49.94,"6-3":1781.9,"6-4":950.34,"6-5":117.53,"6-7":326.1,"6-8":3440.9,"6-9":110.63,"6-10":130.1,"6-11":570.21,"6-12":42.09,"6-13":959.48,"6-14":204.06,"7-1":219.84,"7-2":123.67,"7-3":4412.54,"7-4":2353.35,"7-5":291.05,"7-6":340.83,"7-8":8520.76,"7-9":273.95,"7-10":322.17,"7-11":1412.01,"7-12":104.22,"7-13":2375.98,"7-14":505.32,"8-1":2385.99,"8-2":1342.27,"8-3":47890.27,"8-4":25541.48,"8-5":3158.84,"8-6":3699.11,"8-7":8764.23,"8-9":2973.23,"8-10":3496.55,"8-11":15324.89,"8-12":1131.11,"8-13":25787.07,"8-14":5484.37,"9-1":70.0,"9-2":39.38,"9-3":1404.9,"9-4":749.28,"9-5":92.67,"9-6":108.52,"9-7":257.11,"9-8":2712.91,"9-10":102.57,"9-11":449.57,"9-12":33.18,"9-13":756.49,"9-14":160.89,"10-1":83.54,"10-2":46.99,"10-3":1676.69,"10-4":894.24,"10-5":110.59,"10-6":129.51,"10-7":306.85,"10-8":3237.76,"10-9":104.1,"10-11":536.54,"10-12":39.6,"10-13":902.84,"10-14":192.01,"11-1":389.6,"11-2":219.18,"11-3":7819.9,"11-4":4170.61,"11-5":515.8,"11-6":604.02,"11-7":1431.09,"11-8":15100.49,"11-9":485.49,"11-10":570.94,"11-12":184.7,"11-13":4210.71,"11-14":895.53,"12-1":22.33,"12-2":12.56,"12-3":448.17,"12-4":239.02,"12-5":29.56,"12-6":34.62,"12-7":82.02,"12-8":865.43,"12-9":27.82,"12-10":32.72,"12-11":143.41,"12-13":241.32,"12-14":51.32,"13-1":660.32,"13-2":371.47,"13-3":13253.57,"13-4":7068.57,"13-5":874.2,"13-6":1023.72,"13-7":2425.49,"13-8":25593.1,"13-9":822.84,"13-10":967.67,"13-11":4241.14,"13-12":313.03,"13-14":1517.79,"14-1":134.97,"14-2":75.93,"14-3":2709.09,"14-4":1444.85,"14-5":178.69,"14-6":209.25,"14-7":495.78,"14-8":5231.35,"14-9":168.19,"14-10":197.8,"14-11":866.91,"14-12":63.99,"14-13":1458.74};
+  // Fetch latest pool payouts on load. If successful, replaces the bundled fallback.
+  // The JSON file is refreshed by a GitHub Action that scrapes NYRA Bets every ~5 min.
+  let POOL_LIVE_AT = null;
+  fetch('data/preakness_pool.json?t=' + Date.now())
+    .then(r => r.ok ? r.json() : null)
+    .then(d => {
+      if (d && d.strengths && d.exacta_payouts_dollar1) {
+        POOL_DATA = {
+          strengths: d.strengths,
+          ex_factor: d.ex_factor || 0.78,
+          tri_factor: d.tri_factor || 0.65,
+          super_factor: d.super_factor || 0.55,
+        };
+        POOL_EXACTA = d.exacta_payouts_dollar1;
+        POOL_LIVE_AT = d.updated_at;
+        console.log('[sim] Live pool data loaded, updated_at=' + POOL_LIVE_AT);
+      }
+    })
+    .catch(e => console.warn('[sim] Pool fetch failed, using bundled fallback:', e));
+
+  function poolExacta1(a, b) {
+    // Returns $1 exacta payout (winnings on $1 stake) for A→B, or null if not in pool.
+    return POOL_EXACTA[a + '-' + b] || null;
+  }
+  function poolTrifecta1(a, b, c) {
+    // Anchor on live $1 exacta A→B, then extend via PL: P(C 3rd | A,B out) = s_C / (1 - s_A - s_B)
+    const s = POOL_DATA.strengths;
+    const ex1 = poolExacta1(a, b);
+    if (!ex1 || !s[a] || !s[b] || !s[c]) return null;
+    const denom = 1 - s[a] - s[b];
+    if (denom <= 0) return null;
+    const leg3Factor = denom / s[c];
+    const takeoutAdj = POOL_DATA.tri_factor / POOL_DATA.ex_factor;
+    return ex1 * leg3Factor * takeoutAdj - 1;
+  }
+  function poolSuperfecta1(a, b, c, d) {
+    const s = POOL_DATA.strengths;
+    const ex1 = poolExacta1(a, b);
+    if (!ex1 || !s[a] || !s[b] || !s[c] || !s[d]) return null;
+    const denom1 = 1 - s[a] - s[b];
+    const denom2 = denom1 - s[c];
+    if (denom1 <= 0 || denom2 <= 0) return null;
+    const leg3 = denom1 / s[c];
+    const leg4 = denom2 / s[d];
+    const takeoutAdj = POOL_DATA.super_factor / POOL_DATA.ex_factor;
+    return ex1 * leg3 * leg4 * takeoutAdj - 1;
+  }
+
+  function swapToToteboard(finishOrder, paceShape) {
+    const w = finishOrder[0], s = finishOrder[1], t = finishOrder[2], f = finishOrder[3];
+    const wD = w.ml_dec + 1, sD = s.ml_dec + 1, tD = t.ml_dec + 1, fD = f.ml_dec + 1;
+    const winPay = wD*2.0, winPlace = wD*1.05+1.5, winShow = wD*0.65+1.5;
+    const sPlace = sD*0.55+1.0, sShow = sD*0.40+1.0, tShow = tD*0.45+1.0;
+    // Pool-anchored exotic payouts (live data); fall back to ML-derived if combo isn't in pool.
+    const ex1 = poolExacta1(w.post, s.post);
+    const tri1 = poolTrifecta1(w.post, s.post, t.post);
+    const sup1 = poolSuperfecta1(w.post, s.post, t.post, f.post);
+    const exacta     = ex1  != null ? ex1 * 2          : wD*sD*1.7;
+    const trifecta   = tri1 != null ? tri1             : wD*sD*tD*1.0;
+    const superfecta = sup1 != null ? sup1             : wD*sD*tD*fD*0.55;
+    const finalTime = `2:0${Math.floor(Math.random()*4)}.${(Math.floor(Math.random()*100)).toString().padStart(2,'0')}`;
+    const silk = h => `<span class="tb-silk" data-post="${h.post}" style="background:${h.tw};color:${h.nm};">${h.post}</span>`;
+    const restSilk = h => `<span class="tb-rest-silk" data-post="${h.post}" style="background:${h.tw};color:${h.nm};">${h.post}</span>`;
+    const wMargin = `won by ${fmtMargin(s.lengthsBehind - w.lengthsBehind)}`;
+    const sMargin = fmtMargin(s.lengthsBehind - w.lengthsBehind);
+    const tMargin = fmtMargin(t.lengthsBehind - s.lengthsBehind);
+    let restHtml = '';
+    for (let i = 3; i < finishOrder.length; i++) {
+      const hh = finishOrder[i];
+      restHtml += `<span class="tb-rest-item"><span class="tb-rest-pos">${(i+1)+'th'}</span>${restSilk(hh)}</span>`;
+    }
+    const html = `
+      <div class="tb">
+        <div class="tb-title">158TH BELMONT STAKES</div>
+        <div class="tb-sub">SIMULATED RESULTS &nbsp;·&nbsp; FINAL TIME: ${finalTime} &nbsp;·&nbsp; ${paceShape.toUpperCase()} PACE</div>
+        <table class="tb-tbl">
+          <thead><tr><th class="l"></th><th class="l"></th><th class="l">MARGIN</th><th>ODDS</th><th>WIN</th><th>PLACE</th><th>SHOW</th></tr></thead>
+          <tbody>
+            <tr><td class="silk l">${silk(w)}</td><td class="name l">${w.name.toUpperCase()}</td><td class="margin l">${wMargin}</td><td>${fmtOdds(w.ml)}</td><td>${fmtMoney(winPay)}</td><td>${fmtMoney(winPlace)}</td><td>${fmtMoney(winShow)}</td></tr>
+            <tr><td class="silk l">${silk(s)}</td><td class="name l">${s.name.toUpperCase()}</td><td class="margin l">${sMargin}</td><td>${fmtOdds(s.ml)}</td><td></td><td>${fmtMoney(sPlace)}</td><td>${fmtMoney(sShow)}</td></tr>
+            <tr><td class="silk l">${silk(t)}</td><td class="name l">${t.name.toUpperCase()}</td><td class="margin l">${tMargin}</td><td>${fmtOdds(t.ml)}</td><td></td><td></td><td>${fmtMoney(tShow)}</td></tr>
+          </tbody>
+        </table>
+        <div class="tb-exotics">
+          <div class="tb-exotic"><div class="tb-exotic-lbl">$2.00 EXACTA</div><div class="tb-exotic-combo">${w.post}-${s.post}</div><div class="tb-exotic-pay">${fmtMoney(exacta)}</div></div>
+          <div class="tb-exotic"><div class="tb-exotic-lbl">$1.00 TRIFECTA</div><div class="tb-exotic-combo">${w.post}-${s.post}-${t.post}</div><div class="tb-exotic-pay">${fmtMoney(trifecta)}</div></div>
+          <div class="tb-exotic"><div class="tb-exotic-lbl">$1.00 SUPERFECTA</div><div class="tb-exotic-combo">${w.post}-${s.post}-${t.post}-${f.post}</div><div class="tb-exotic-pay">${fmtMoney(superfecta)}</div></div>
+        </div>
+        <div class="tb-disclaimer">Payouts are model-estimated. Live pool not connected for Preakness yet.</div>
+        <div class="tb-rest"><span class="tb-rest-lbl">FULL ORDER&nbsp;</span>${restHtml}</div>
+        <div class="tb-meta">SIM ${(currentSimIdx + 1).toLocaleString()} / ${SIMS_DATA.sims.length.toLocaleString()}</div>
+      </div>
+    `;
+    showToteSwap(html);
+  }
+
+  renderTrack();
+})();
+</script>
+</body>
+</html>
