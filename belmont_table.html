@@ -69,7 +69,7 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light; }
 }
 .kd-sort-btn:hover { background: var(--bg-muted); }
 .kd-sort-btn.active { background: var(--accent); border-color: var(--accent); color: var(--gold); }
-.kd-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 0 0 8px 8px; }
+.kd-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .kd-table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 480px; }
 .kd-table thead th {
   background: var(--bg-muted); border-bottom: 2px solid var(--gold);
@@ -104,7 +104,30 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light; }
   border-top: 1px solid var(--border); background: var(--bg-muted);
   border-radius: 0 0 8px 8px; line-height: 1.5;
 }
-@media (max-width: 700px) { .kd-title { font-size: 18px; } }
+@media (max-width: 700px) { .kd-title { font-size: 18px; } 
+.cell-live { font-weight: 600; color: var(--accent); font-variant-numeric: tabular-nums; }
+.cell-live.stale { color: var(--text-muted); font-weight: 500; }
+.live-status {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 10px 22px; font-size: 11px; color: var(--text-muted);
+  border-top: 1px solid var(--border); background: var(--bg-muted);
+  border-radius: 0 0 8px 8px; letter-spacing: 0.3px;
+}
+.live-status.fresh { color: var(--accent); font-weight: 600; }
+.live-status.error { color: #d33; }
+.live-dot {
+  display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+  background: var(--accent); box-shadow: 0 0 0 0 rgba(17,199,92,0.6);
+  animation: livePulse 2s ease-out infinite;
+}
+.live-dot.error { background: #d33; animation: none; }
+@keyframes livePulse {
+  0% { box-shadow: 0 0 0 0 rgba(17,199,92,0.6); }
+  70% { box-shadow: 0 0 0 6px rgba(17,199,92,0); }
+  100% { box-shadow: 0 0 0 0 rgba(17,199,92,0); }
+}
+/* Adjust table-wrap radius since we now have a footer */
+}
 </style>
 </head>
 <body>
@@ -122,7 +145,7 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light; }
     <span class="label">Sort:</span>
     <button class="kd-sort-btn active" data-sort="win">Win %</button>
     <button class="kd-sort-btn" data-sort="post">Post</button>
-    <button class="kd-sort-btn" data-sort="edge">Edge</button>
+    <button class="kd-sort-btn" data-sort="edge">Live Edge</button>
   </div>
   <div class="kd-table-wrap">
     <table class="kd-table">
@@ -131,6 +154,7 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light; }
           <th>Post</th>
           <th>Horse</th>
           <th class="tcenter">Fair</th>
+          <th class="tcenter">Live</th>
           <th class="tcenter">Edge</th>
           <th class="tcenter">Win %</th>
           <th class="tcenter">Top 3 %</th>
@@ -147,6 +171,7 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light; }
     <div class="horse-meta">Midpack · 100 BEY / 114 TFUS · J. Alvarado / W. Mott</div>
   </td>
   <td class="cell-num cell-fair">2.6-1</td>
+  <td class="cell-num cell-live" data-live="">—</td>
   <td class="cell-edge edge-neutral">+3.0%</td>
   <td class="cell-num cell-pct">28.0%</td>
   <td class="cell-num">73.2%</td>
@@ -161,6 +186,7 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light; }
     <div class="horse-meta">Closer · 98 BEY / 117 TFUS · I. Ortiz Jr / T. Pletcher</div>
   </td>
   <td class="cell-num cell-fair">3.2-1</td>
+  <td class="cell-num cell-live" data-live="">—</td>
   <td class="cell-edge edge-strong-neg">-9.6%</td>
   <td class="cell-num cell-pct">23.7%</td>
   <td class="cell-num">64.8%</td>
@@ -175,6 +201,7 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light; }
     <div class="horse-meta">Midpack · 101 BEY / 115 TFUS · J. Velazquez / B. Cox</div>
   </td>
   <td class="cell-num cell-fair">4.8-1</td>
+  <td class="cell-num cell-live" data-live="">—</td>
   <td class="cell-edge edge-neutral">+2.8%</td>
   <td class="cell-num cell-pct">17.1%</td>
   <td class="cell-num">53.0%</td>
@@ -189,6 +216,7 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light; }
     <div class="horse-meta">Midpack · 97 BEY / 110 TFUS · F. Prat / C. Brown</div>
   </td>
   <td class="cell-num cell-fair">5.3-1</td>
+  <td class="cell-num cell-live" data-live="">—</td>
   <td class="cell-edge edge-neutral">+1.5%</td>
   <td class="cell-num cell-pct">15.8%</td>
   <td class="cell-num">51.3%</td>
@@ -203,6 +231,7 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light; }
     <div class="horse-meta">Plodder · 95 BEY / 116 TFUS · J. Ortiz / C. DeVaux</div>
   </td>
   <td class="cell-num cell-fair">19.1-1</td>
+  <td class="cell-num cell-live" data-live="">—</td>
   <td class="cell-edge edge-strong-neg">-13.2%</td>
   <td class="cell-num cell-pct">5.0%</td>
   <td class="cell-num">18.5%</td>
@@ -217,6 +246,7 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light; }
     <div class="horse-meta">Speed · 96 BEY / 106 TFUS · L. Saez / T. Pletcher</div>
   </td>
   <td class="cell-num cell-fair">21.0-1</td>
+  <td class="cell-num cell-live" data-live="">—</td>
   <td class="cell-edge edge-neg">-3.2%</td>
   <td class="cell-num cell-pct">4.5%</td>
   <td class="cell-num">17.5%</td>
@@ -231,6 +261,7 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light; }
     <div class="horse-meta">Midpack · 93 BEY / 114 TFUS · M. Franco / C. Brown</div>
   </td>
   <td class="cell-num cell-fair">34.8-1</td>
+  <td class="cell-num cell-live" data-live="">—</td>
   <td class="cell-edge edge-neg">-4.9%</td>
   <td class="cell-num cell-pct">2.8%</td>
   <td class="cell-num">10.2%</td>
@@ -245,6 +276,7 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light; }
     <div class="horse-meta">Midpack · 89 BEY / 107 TFUS · D. Davis / C. Brown</div>
   </td>
   <td class="cell-num cell-fair">60.7-1</td>
+  <td class="cell-num cell-live" data-live="">—</td>
   <td class="cell-edge edge-neg">-3.1%</td>
   <td class="cell-num cell-pct">1.6%</td>
   <td class="cell-num">6.0%</td>
@@ -259,6 +291,7 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light; }
     <div class="horse-meta">Closer · 86 BEY / 109 TFUS · A. Fresu / D. O'Neill</div>
   </td>
   <td class="cell-num cell-fair">69.4-1</td>
+  <td class="cell-num cell-live" data-live="">—</td>
   <td class="cell-edge edge-neutral">-1.8%</td>
   <td class="cell-num cell-pct">1.4%</td>
   <td class="cell-num">5.4%</td>
@@ -267,11 +300,74 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light; }
     </table>
   </div>
   </div>
+  <div class="live-status" id="live-status">
+    <span class="live-dot" id="live-dot"></span>
+    <span id="live-ts">Loading live pool data…</span>
+  </div>
 <script>
 (function() {
   const tbody = document.getElementById('kd-table-body');
   const btns = document.querySelectorAll('.kd-sort-btn');
+  const liveDot = document.getElementById('live-dot');
+  const liveTs = document.getElementById('live-ts');
+  const liveStatus = document.getElementById('live-status');
+  let currentSort = 'win';
+
+  function decToOdds(s) {
+    if (!s || s <= 0) return '—';
+    const dec = (1 - s) / s;
+    if (dec >= 1) {
+      const r = Math.round(dec * 10) / 10;
+      return r.toFixed(1) + '-1';
+    }
+    const inv = 1 / dec;
+    if (inv >= 5) return '1-' + Math.round(inv);
+    if (inv >= 2.5) return '2-5';
+    if (inv >= 1.6) return '3-5';
+    return '4-5';
+  }
+
+  function edgeClass(edge) {
+    // edge is win_prob - live_implied (or vs ML if no live)
+    if (edge >= 0.08) return 'edge-strong-pos';
+    if (edge >= 0.02) return 'edge-pos';
+    if (edge >= -0.02) return 'edge-neutral';
+    if (edge >= -0.08) return 'edge-neg';
+    return 'edge-strong-neg';
+  }
+
+  function fmtPct(p) {
+    const sign = p >= 0 ? '+' : '';
+    return sign + (p * 100).toFixed(1) + '%';
+  }
+
+  function applyLive(strengths) {
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    rows.forEach(row => {
+      const post = row.dataset.post;
+      const s = strengths[post];
+      const winPct = parseFloat(row.dataset.win);
+      const liveCell = row.querySelector('.cell-live');
+      const edgeCell = row.querySelector('.cell-edge');
+      if (s && s > 0) {
+        liveCell.textContent = decToOdds(s);
+        liveCell.classList.remove('stale');
+        liveCell.dataset.live = s;
+        const liveEdge = winPct - s;
+        row.dataset.edge = liveEdge.toFixed(4);
+        edgeCell.textContent = fmtPct(liveEdge);
+        edgeCell.className = 'cell-edge ' + edgeClass(liveEdge);
+      } else {
+        liveCell.textContent = '—';
+        liveCell.classList.add('stale');
+      }
+    });
+    // Re-apply current sort with updated edge values
+    sortBy(currentSort);
+  }
+
   function sortBy(mode) {
+    currentSort = mode;
     const rows = Array.from(tbody.querySelectorAll('tr'));
     rows.sort((a,b) => {
       if (mode === 'win') return parseFloat(b.dataset.win) - parseFloat(a.dataset.win);
@@ -280,11 +376,44 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light; }
     });
     rows.forEach(r => tbody.appendChild(r));
   }
+
   btns.forEach(b => b.addEventListener('click', () => {
     btns.forEach(x => x.classList.remove('active'));
     b.classList.add('active');
     sortBy(b.dataset.sort);
   }));
+
+  async function fetchPool() {
+    try {
+      const r = await fetch('data/belmont/belmont_pool_payouts.json?t=' + Date.now());
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const d = await r.json();
+      if (d?.strengths) {
+        applyLive(d.strengths);
+        const dt = new Date(d.updated_at);
+        const diffMin = (Date.now() - dt.getTime()) / 60000;
+        liveStatus.classList.remove('error');
+        if (diffMin < 35) {
+          liveStatus.classList.add('fresh');
+          liveDot.classList.remove('error');
+          const exGross = d?.pool_totals?.EX?.gross || 0;
+          liveTs.textContent = 'Live · pool $' + Math.round(exGross).toLocaleString() + ' · updated ' + (diffMin < 1 ? 'just now' : Math.round(diffMin) + 'm ago');
+        } else {
+          liveStatus.classList.remove('fresh');
+          liveDot.classList.add('error');
+          liveTs.textContent = 'Stale — last update ' + Math.round(diffMin) + ' min ago';
+        }
+      }
+    } catch(e) {
+      console.warn('Pool fetch failed:', e);
+      liveStatus.classList.add('error');
+      liveDot.classList.add('error');
+      liveTs.textContent = 'Live pool unreachable — showing static fair odds';
+    }
+  }
+
+  fetchPool();
+  setInterval(fetchPool, 60000);
 })();
 </script>
 </body>
