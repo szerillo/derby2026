@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- belmont_payouts.html v2.4 — WIN/EX/TRI/SUP only (place/show off) -->
+<!-- belmont_payouts.html v2.6 — Returns shows profit multiple (you get stake back) -->
 <html lang="en">
 <head>
 <meta charset="utf-8" />
@@ -225,18 +225,28 @@
   function fmtMoney(x) {
     return '$' + x.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
-  function decToOdds(s) {
-    if (!s || s <= 0) return '—';
+  function roundedTote(s) {
+    // Returns the rounded profit-per-$1 ratio that decToOdds() will display,
+    // so payout math can stay perfectly consistent with the shown odds.
+    if (!s || s <= 0) return null;
     const dec = (1 - s) / s;
-    if (dec >= 1) {
-      const r = Math.round(dec * 5) / 5;
-      return r + '-1';
-    }
+    if (dec >= 1) return Math.round(dec * 5) / 5;       // 2.2-1, 5.8-1, etc.
     const inv = 1 / dec;
-    if (inv >= 5) return '1-' + Math.round(inv);
-    if (inv >= 2.5) return '2-5';
-    if (inv >= 1.6) return '3-5';
-    return '4-5';
+    if (inv >= 5) return 1 / Math.round(inv);            // 1-X
+    if (inv >= 2.5) return 0.4;                          // 2-5
+    if (inv >= 1.6) return 0.6;                          // 3-5
+    return 0.8;                                          // 4-5
+  }
+  function decToOdds(s) {
+    const r = roundedTote(s);
+    if (r === null) return '—';
+    if (r >= 1) return r + '-1';
+    if (r >= 0.7) return '4-5';
+    if (r >= 0.5) return '3-5';
+    if (r >= 0.35) return '2-5';
+    // 1-X family (r = 1/X)
+    const X = Math.round(1 / r);
+    return '1-' + X;
   }
 
   // ---------- payout math ----------
@@ -249,8 +259,9 @@
 
   function winPay(stake, post) {
     const s = liveStrength(post);
-    if (!s) return null;
-    return stake / s;
+    const r = roundedTote(s);
+    if (r === null) return null;
+    return stake * (r + 1);
   }
   function exactaPay(stake, a, b) {
     const ex1 = exactaPool(a, b);
@@ -401,15 +412,20 @@
     } else {
       document.getElementById('r-pay').textContent = fmtMoney(out.val);
       document.getElementById('r-pay').classList.remove('partial');
-      const ret = out.val / stake;
-      document.getElementById('r-line2').textContent = `Returns ${ret.toFixed(1)}× on $${stake}`;
+      const profit = out.val - stake;
+      const ret = profit / stake;
+      document.getElementById('r-line2').textContent = `Profit $${profit.toFixed(2)} (${ret.toFixed(1)}× on $${stake} risk)`;
     }
   }
 
   function renderStake() {
     document.querySelectorAll('#stake-presets button').forEach(b => {
       b.classList.toggle('active', parseInt(b.dataset.stake) === stake);
-      b.onclick = () => { stake = parseInt(b.dataset.stake); renderResult(); };
+      b.onclick = () => {
+        stake = parseInt(b.dataset.stake);
+        renderStake();   // refresh active highlight
+        renderResult();
+      };
     });
   }
 
