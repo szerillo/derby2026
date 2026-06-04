@@ -13,10 +13,10 @@
   --text: #1a1a1a;
   --text-muted: #5a6b5a;
   --border: #d4dcc8;
-  --accent: #0e5c39;          /* Belmont green */
-  --accent-dark: #0a4029;
-  --gold: #c7a654;             /* Belmont gold */
-  --gold-light: #e8d59f;
+  --accent: #1a1a1a;          /* Belmont green */
+  --accent-dark: #000000;
+  --gold: #11c75c;             /* Belmont gold */
+  --gold-light: #5fd984;
   --cream: #f4e9d8;
   --pos: #1d8348;
   --pos-soft: #d4f0dc;
@@ -49,7 +49,7 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light; }
 .kd-title { font-size: 22px; font-weight: 700; margin: 0 0 4px; letter-spacing: 0.5px; color: #fff; }
 .kd-subtitle { font-size: 13px; opacity: 0.95; margin: 0; color: var(--gold-light); }
 .kd-byline-header { font-size: 12px; margin-top: 6px; opacity: 0.9; }
-.kd-byline-header a { color: var(--gold); text-decoration: none; font-weight: 600; border-bottom: 1px dotted rgba(199,166,84,0.5); }
+.kd-byline-header a { color: var(--gold); text-decoration: none; font-weight: 600; border-bottom: 1px dotted rgba(17,199,92,0.5); }
 .kd-byline-header a:hover { border-bottom-style: solid; }
 .kd-brand { position: absolute; top: 14px; right: 18px; display: inline-flex; align-items: center; gap: 6px; }
 .kd-brand-text { font-weight: 900; font-size: 16px; letter-spacing: -0.3px; color: var(--gold); }
@@ -69,7 +69,7 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light; }
 }
 .kd-sort-btn:hover { background: var(--bg-muted); }
 .kd-sort-btn.active { background: var(--accent); border-color: var(--accent); color: var(--gold); }
-.kd-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.kd-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 0 0 8px 8px; }
 .kd-table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 480px; }
 .kd-table thead th {
   background: var(--bg-muted); border-bottom: 2px solid var(--gold);
@@ -266,11 +266,7 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light; }
       </tbody>
     </table>
   </div>
-  <div class="kd-footer">
-    Model: speed-figure base + pace adjustments + tier overrides (A: #3 Chief Wallabee, #4 Renegade · B: #7 Commandment, #8 Emerging Market, #9 Golden Tempo).
-    Saratoga 1 1/4M plays forward — midpack styles benefit. Fair odds shown vs morning line; positive edge = model overlay.
   </div>
-</div>
 <script>
 (function() {
   const tbody = document.getElementById('kd-table-body');
