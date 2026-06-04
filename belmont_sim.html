@@ -132,30 +132,30 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light;
 .tip-row { display: flex; justify-content: space-between; gap: 12px; padding: 1.5px 0; color: rgba(199,166,84,0.85); font-variant-numeric: tabular-nums; }
 .tip-lbl { color: rgba(199,166,84,0.55); font-size: 10px; }
 
-.tb { background: #06301f; color: #c7a654; padding: 16px 22px; border-radius: 6px; border: 1px solid rgba(199,166,84,0.25); font-family: 'Helvetica Neue', Arial, sans-serif; }
-.tb-title { font-size: 17px; font-weight: 500; text-align: center; letter-spacing: 2px; color: #FFFFFF; margin-bottom: 4px; }
-.tb-sub { font-size: 11px; text-align: center; color: rgba(199,166,84,0.7); letter-spacing: 1.5px; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 0.5px solid rgba(199,166,84,0.2); }
+.tb { background: transparent; color: #1a1a1a; padding: 16px 22px; border-radius: 6px; border: none; font-family: 'Helvetica Neue', Arial, sans-serif; }
+.tb-title { font-size: 17px; font-weight: 700; text-align: center; letter-spacing: 2px; color: #0a4029; margin-bottom: 4px; }
+.tb-sub { font-size: 11px; text-align: center; color: #6b6b6b; letter-spacing: 1.5px; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 0.5px solid rgba(0,0,0,0.12); }
 .tb-tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
-.tb-tbl th { font-size: 10px; font-weight: 500; color: rgba(199,166,84,0.55); text-align: right; padding: 6px 5px; letter-spacing: 1px; }
+.tb-tbl th { font-size: 10px; font-weight: 600; color: #6b6b6b; text-align: right; padding: 6px 5px; letter-spacing: 1px; }
 .tb-tbl th.l { text-align: left; }
-.tb-tbl td { padding: 9px 5px; font-variant-numeric: tabular-nums; text-align: right; }
+.tb-tbl td { padding: 9px 5px; font-variant-numeric: tabular-nums; text-align: right; color: #1a1a1a; }
 .tb-tbl td.l { text-align: left; }
 .tb-tbl td.silk { width: 28px; }
-.tb-tbl td.name { font-weight: 500; color: #FFFFFF; letter-spacing: 0.4px; }
-.tb-tbl td.margin { color: rgba(199,166,84,0.65); font-size: 11px; font-style: italic; }
-.tb-silk { display: inline-block; width: 22px; height: 22px; border-radius: 3px; text-align: center; line-height: 22px; font-size: 11px; font-weight: 500; border: 0.5px solid rgba(0,0,0,0.4); cursor: help; }
-.tb-exotics { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; border-top: 0.5px solid rgba(199,166,84,0.25); padding-top: 12px; margin-top: 8px; }
+.tb-tbl td.name { font-weight: 700; color: #0a4029; letter-spacing: 0.4px; }
+.tb-tbl td.margin { color: #6b6b6b; font-size: 11px; font-style: italic; }
+.tb-silk { display: inline-block; width: 22px; height: 22px; border-radius: 3px; text-align: center; line-height: 22px; font-size: 11px; font-weight: 700; border: 0.5px solid rgba(0,0,0,0.25); cursor: help; }
+.tb-exotics { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; border-top: 0.5px solid rgba(0,0,0,0.12); padding-top: 12px; margin-top: 8px; }
 .tb-exotic { text-align: center; }
-.tb-exotic-lbl { font-size: 10px; color: rgba(199,166,84,0.6); letter-spacing: 1px; margin-bottom: 4px; }
-.tb-exotic-combo { font-size: 13px; color: #FFFFFF; margin-bottom: 3px; font-variant-numeric: tabular-nums; letter-spacing: 0.5px; }
-.tb-exotic-pay { font-size: 15px; color: #c7a654; font-weight: 500; font-variant-numeric: tabular-nums; }
-.tb-rest { display: flex; flex-wrap: wrap; gap: 6px; padding: 12px 0 4px; border-top: 0.5px solid rgba(199,166,84,0.18); margin-top: 12px; }
-.tb-rest-lbl { font-size: 10px; color: rgba(199,166,84,0.55); letter-spacing: 1px; align-self: center; margin-right: 4px; }
+.tb-exotic-lbl { font-size: 10px; color: #6b6b6b; letter-spacing: 1px; margin-bottom: 4px; font-weight: 600; }
+.tb-exotic-combo { font-size: 13px; color: #1a1a1a; margin-bottom: 3px; font-variant-numeric: tabular-nums; letter-spacing: 0.5px; }
+.tb-exotic-pay { font-size: 15px; color: #8a7035; font-weight: 700; font-variant-numeric: tabular-nums; }
+.tb-rest { display: flex; flex-wrap: wrap; gap: 6px; padding: 12px 0 4px; border-top: 0.5px solid rgba(0,0,0,0.10); margin-top: 12px; }
+.tb-rest-lbl { font-size: 10px; color: #6b6b6b; letter-spacing: 1px; align-self: center; margin-right: 4px; }
 .tb-rest-item { display: inline-flex; align-items: center; gap: 4px; }
-.tb-rest-pos { font-size: 10px; color: rgba(199,166,84,0.55); font-variant-numeric: tabular-nums; }
-.tb-rest-silk { display: inline-block; width: 20px; height: 20px; border-radius: 3px; text-align: center; line-height: 20px; font-size: 10px; font-weight: 500; border: 0.5px solid rgba(0,0,0,0.4); cursor: help; }
-.tb-disclaimer { font-size: 11px; color: rgba(232,213,159,0.65); margin: 10px 0 4px; padding: 6px 12px; background: transparent; border: none; text-align: center; line-height: 1.45; letter-spacing: 0.2px; }
-.tb-meta { font-size: 9px; color: rgba(199,166,84,0.4); margin-top: 6px; letter-spacing: 0.5px; text-align: center; }
+.tb-rest-pos { font-size: 10px; color: #6b6b6b; font-variant-numeric: tabular-nums; }
+.tb-rest-silk { display: inline-block; width: 20px; height: 20px; border-radius: 3px; text-align: center; line-height: 20px; font-size: 10px; font-weight: 700; border: 0.5px solid rgba(0,0,0,0.25); cursor: help; }
+.tb-disclaimer { font-size: 11px; color: #6b6b6b; margin: 10px 0 4px; padding: 6px 12px; background: transparent; border: none; text-align: center; line-height: 1.45; letter-spacing: 0.2px; font-style: italic; }
+.tb-meta { font-size: 9px; color: #999; margin-top: 6px; letter-spacing: 0.5px; text-align: center; }
 
 @media (max-width: 600px) {
   .dt-top-bar { gap: 6px; }
@@ -242,7 +242,7 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light;
   // --- v3.2: Real database of 10,000 sims (Option A) ---
   let SIMS_DATA = null;
   let currentSimIdx = null;
-  fetch('data/belmont/belmont_sims.json?v=v5').then(r => r.json()).then(d => {
+  fetch('data/belmont/belmont_sims.json?v=v6').then(r => r.json()).then(d => {
     SIMS_DATA = d;
     document.getElementById('dt-play').disabled = false;
     const counterEl = document.getElementById('sim-counter');
