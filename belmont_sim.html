@@ -242,7 +242,7 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light;
   // --- v3.2: Real database of 10,000 sims (Option A) ---
   let SIMS_DATA = null;
   let currentSimIdx = null;
-  fetch('data/belmont/belmont_sims.json?v=v8').then(r => r.json()).then(d => {
+  fetch('data/belmont/belmont_sims.json?v=v9').then(r => r.json()).then(d => {
     SIMS_DATA = d;
     document.getElementById('dt-play').disabled = false;
     const counterEl = document.getElementById('sim-counter');
@@ -371,8 +371,8 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light;
     svg += `<rect x="0" y="0" width="${W}" height="${H}" fill="#e8e8e8"/>`;
     // 2) Darker green band around the oval (the "track surround" turf)
     svg += `<path d="${railPath(R + ringWidth/2 + 14)}" fill="#1a1a1a" stroke="none"/>`;
-    // 3) Dirt running surface (tan)
-    svg += `<path d="${visiblePath()}" fill="none" stroke="#11c75c" stroke-width="${ringWidth}" stroke-linejoin="round"/>`;
+    // 3) Dirt running surface (sandy tan — Saratoga main track)
+    svg += `<path d="${visiblePath()}" fill="none" stroke="#b08552" stroke-width="${ringWidth}" stroke-linejoin="round"/>`;
     // 4) Subtle dirt texture overlay (lighter speckle)
     svg += `<path d="${visiblePath()}" fill="none" stroke="rgba(196,149,95,0.4)" stroke-width="${ringWidth - 4}" stroke-linejoin="round" stroke-dasharray="0.5,1.5"/>`;
     // 5) Outer rail (subtle dark)
@@ -1075,7 +1075,7 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light;
           <div class="tb-exotic"><div class="tb-exotic-lbl">$1.00 TRIFECTA</div><div class="tb-exotic-combo">${w.post}-${s.post}-${t.post}</div><div class="tb-exotic-pay">${fmtMoney(trifecta)}</div></div>
           <div class="tb-exotic"><div class="tb-exotic-lbl">$1.00 SUPERFECTA</div><div class="tb-exotic-combo">${w.post}-${s.post}-${t.post}-${f.post}</div><div class="tb-exotic-pay">${fmtMoney(superfecta)}</div></div>
         </div>
-        <div class="tb-disclaimer">Payouts are model-estimated from blended win/place/show probabilities.</div>
+        <div class="tb-disclaimer">Payouts derived from the live NYRA exacta pool, extended via Plackett-Luce and calibrated to historical Belmont Stakes payouts.</div>
         <div class="tb-rest"><span class="tb-rest-lbl">FULL ORDER&nbsp;</span>${restHtml}</div>
         <div class="tb-meta">SIM ${(currentSimIdx + 1).toLocaleString()} / ${SIMS_DATA.sims.length.toLocaleString()}</div>
       </div>
