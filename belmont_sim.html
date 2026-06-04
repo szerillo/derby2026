@@ -242,7 +242,7 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light;
   // --- v3.2: Real database of 10,000 sims (Option A) ---
   let SIMS_DATA = null;
   let currentSimIdx = null;
-  fetch('data/belmont/belmont_sims.json').then(r => r.json()).then(d => {
+  fetch('data/belmont/belmont_sims.json?v=10k').then(r => r.json()).then(d => {
     SIMS_DATA = d;
     document.getElementById('dt-play').disabled = false;
     const counterEl = document.getElementById('sim-counter');
