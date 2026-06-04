@@ -69,7 +69,7 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light; }
 }
 .kd-sort-btn:hover { background: var(--bg-muted); }
 .kd-sort-btn.active { background: var(--accent); border-color: var(--accent); color: var(--gold); }
-.kd-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.kd-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 0 0 8px 8px; }
 .kd-table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 480px; }
 .kd-table thead th {
   background: var(--bg-muted); border-bottom: 2px solid var(--gold);
@@ -107,23 +107,6 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light; }
 @media (max-width: 700px) { .kd-title { font-size: 18px; } 
 .cell-live { font-weight: 600; color: var(--accent); font-variant-numeric: tabular-nums; }
 .cell-live.stale { color: var(--text-muted); font-weight: 500; }
-.live-status {
-  display: flex; align-items: center; justify-content: center; gap: 8px;
-  padding: 10px 22px; font-size: 11px; color: var(--text-muted);
-  border-top: 1px solid var(--border); background: var(--bg-muted);
-  border-radius: 0 0 8px 8px; letter-spacing: 0.3px;
-}
-.live-status.fresh { color: var(--accent); font-weight: 600; }
-.live-status.error { color: #d33; }
-.live-dot {
-  display: inline-block; width: 7px; height: 7px; border-radius: 50%;
-  background: var(--accent); box-shadow: 0 0 0 0 rgba(17,199,92,0.6);
-  animation: livePulse 2s ease-out infinite;
-}
-.live-dot.error { background: #d33; animation: none; }
-@keyframes livePulse {
-  0% { box-shadow: 0 0 0 0 rgba(17,199,92,0.6); }
-  70% { box-shadow: 0 0 0 6px rgba(17,199,92,0); }
   100% { box-shadow: 0 0 0 0 rgba(17,199,92,0); }
 }
 /* Adjust table-wrap radius since we now have a footer */
@@ -300,17 +283,10 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light; }
     </table>
   </div>
   </div>
-  <div class="live-status" id="live-status">
-    <span class="live-dot" id="live-dot"></span>
-    <span id="live-ts">Loading live pool data…</span>
-  </div>
 <script>
 (function() {
   const tbody = document.getElementById('kd-table-body');
   const btns = document.querySelectorAll('.kd-sort-btn');
-  const liveDot = document.getElementById('live-dot');
-  const liveTs = document.getElementById('live-ts');
-  const liveStatus = document.getElementById('live-status');
   let currentSort = 'win';
 
   function decToOdds(s) {
@@ -390,25 +366,9 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light; }
       const d = await r.json();
       if (d?.strengths) {
         applyLive(d.strengths);
-        const dt = new Date(d.updated_at);
-        const diffMin = (Date.now() - dt.getTime()) / 60000;
-        liveStatus.classList.remove('error');
-        if (diffMin < 35) {
-          liveStatus.classList.add('fresh');
-          liveDot.classList.remove('error');
-          const exGross = d?.pool_totals?.EX?.gross || 0;
-          liveTs.textContent = 'Live · pool $' + Math.round(exGross).toLocaleString() + ' · updated ' + (diffMin < 1 ? 'just now' : Math.round(diffMin) + 'm ago');
-        } else {
-          liveStatus.classList.remove('fresh');
-          liveDot.classList.add('error');
-          liveTs.textContent = 'Stale — last update ' + Math.round(diffMin) + ' min ago';
-        }
       }
     } catch(e) {
       console.warn('Pool fetch failed:', e);
-      liveStatus.classList.add('error');
-      liveDot.classList.add('error');
-      liveTs.textContent = 'Live pool unreachable — showing static fair odds';
     }
   }
 

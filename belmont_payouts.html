@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- belmont_payouts.html v2.0 — Wager builder fed by live NYRA pool data -->
+<!-- belmont_payouts.html v2.4 — WIN/EX/TRI/SUP only (place/show off) -->
 <html lang="en">
 <head>
 <meta charset="utf-8" />
@@ -151,8 +151,6 @@
 
     <div class="tabs" id="tabs">
       <button data-bt="win" class="active">WIN</button>
-      <button data-bt="plc">PLACE</button>
-      <button data-bt="shw">SHOW</button>
       <button data-bt="ex">EXACTA</button>
       <button data-bt="tri">TRI</button>
       <button data-bt="sup">SUPER</button>
@@ -187,7 +185,7 @@
     </div>
 
     <div class="timestamp" id="ts"><span class="live-dot" id="dot"></span><span id="ts-text">Loading…</span></div>
-    <div class="footnote">Live NYRA Bets pool · refreshes every 30 min · win/place/show payouts use live pool shares, exotics use NYRA probables extended via Plackett-Luce.</div>
+    <div class="footnote">Live NYRA pool · refreshes every 30 min.</div>
   </div>
 </div>
 
@@ -208,9 +206,9 @@
   const POSTS = Object.keys(FIELD).map(Number).sort((a,b)=>a-b);
 
   // Slot counts per bet type
-  const SLOTS = { win: 1, plc: 1, shw: 1, ex: 2, tri: 3, sup: 4 };
-  const SLOT_LABELS = { win: ['WIN'], plc: ['PLACE'], shw: ['SHOW'], ex: ['1ST','2ND'], tri: ['1ST','2ND','3RD'], sup: ['1ST','2ND','3RD','4TH'] };
-  const BET_LABELS = { win: 'WIN', plc: 'PLACE', shw: 'SHOW', ex: 'EXACTA', tri: 'TRIFECTA', sup: 'SUPERFECTA' };
+  const SLOTS = { win: 1, ex: 2, tri: 3, sup: 4 };
+  const SLOT_LABELS = { win: ['WIN'], ex: ['1ST','2ND'], tri: ['1ST','2ND','3RD'], sup: ['1ST','2ND','3RD','4TH'] };
+  const BET_LABELS = { win: 'WIN', ex: 'EXACTA', tri: 'TRIFECTA', sup: 'SUPERFECTA' };
 
   // State
   let POOL = null;
@@ -228,7 +226,6 @@
     return '$' + x.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
   function decToOdds(s) {
-    // strength s (win prob) → fractional odds string
     if (!s || s <= 0) return '—';
     const dec = (1 - s) / s;
     if (dec >= 1) {
@@ -244,6 +241,7 @@
 
   // ---------- payout math ----------
   function liveStrength(post) { return POOL?.strengths?.[String(post)] || null; }
+  function exStrength(post) { return POOL?.strengths?.[String(post)] || null; }
   function exactaPool(a, b) { return POOL?.exacta_payouts_dollar1?.[a + '-' + b] || null; }
   function ex_factor() { return POOL?.ex_factor || 0.83; }
   function tri_factor() { return POOL?.tri_factor || 0.78; }
@@ -252,19 +250,7 @@
   function winPay(stake, post) {
     const s = liveStrength(post);
     if (!s) return null;
-    return stake / s * 0.83;
-  }
-  function placePay(stake, post) {
-    const s = liveStrength(post);
-    if (!s) return null;
-    const placeProb = Math.min(0.95, s + s * (1 - s) * 1.3);
-    return stake / placeProb * 0.825 * 0.55;
-  }
-  function showPay(stake, post) {
-    const s = liveStrength(post);
-    if (!s) return null;
-    const showProb = Math.min(0.97, s + s * (1 - s) * 2.1);
-    return stake / showProb * 0.825 * 0.35;
+    return stake / s;
   }
   function exactaPay(stake, a, b) {
     const ex1 = exactaPool(a, b);
@@ -273,7 +259,7 @@
   }
   function trifectaPay(stake, a, b, c) {
     const ex1 = exactaPool(a, b);
-    const sA = liveStrength(a), sB = liveStrength(b), sC = liveStrength(c);
+    const sA = exStrength(a), sB = exStrength(b), sC = exStrength(c);
     if (ex1 == null || !sA || !sB || !sC) return null;
     const denom = 1 - sA - sB;
     if (denom <= 0.01) return null;
@@ -283,7 +269,7 @@
   }
   function superfectaPay(stake, a, b, c, d) {
     const ex1 = exactaPool(a, b);
-    const sA = liveStrength(a), sB = liveStrength(b), sC = liveStrength(c), sD = liveStrength(d);
+    const sA = exStrength(a), sB = exStrength(b), sC = exStrength(c), sD = exStrength(d);
     if (ex1 == null || !sA || !sB || !sC || !sD) return null;
     const denom1 = 1 - sA - sB;
     const denom2 = denom1 - sC;
@@ -299,8 +285,6 @@
     const filled = picks.length;
     if (filled < need) return { status: 'partial', text: `${filled}/${need} legs filled — keep tapping` };
     if (betType === 'win') return { status: 'ok', val: winPay(stake, picks[0]) };
-    if (betType === 'plc') return { status: 'ok', val: placePay(stake, picks[0]) };
-    if (betType === 'shw') return { status: 'ok', val: showPay(stake, picks[0]) };
     if (betType === 'ex')  return { status: 'ok', val: exactaPay(stake, picks[0], picks[1]) };
     if (betType === 'tri') return { status: 'ok', val: trifectaPay(stake, picks[0], picks[1], picks[2]) };
     if (betType === 'sup') return { status: 'ok', val: superfectaPay(stake, picks[0], picks[1], picks[2], picks[3]) };
