@@ -2,8 +2,9 @@ name: Scrape NYRA Bets pool
 
 on:
   schedule:
-    # Every 5 minutes (GitHub's minimum reliable cron interval).
-    - cron: '*/5 * * * *'
+    # Every 30 minutes — appropriate cadence pre-race day.
+    # Bump back to */5 close to Belmont post time Saturday if you want sharper tracking.
+    - cron: '*/30 * * * *'
   workflow_dispatch:
 
 permissions:
