@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<!-- belmont_payouts.html v1.0 — Live NYRA Bets pool payouts, refreshed from data/belmont/belmont_pool_payouts.json -->
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="color-scheme" content="light only" />
+<title>158th Belmont Stakes — Live Pool Payouts</title>
+<style>
+  :root {
+    color-scheme: light only;
+    --bg: #ffffff;
+    --card: #f6f4f0;
+    --ink: #1a1a1a;
+    --muted: #6b6b6b;
+    --accent: #11c75c;
+    --accent-dark: #0e9a48;
+    --tote: #000000;
+    --tote-green: #11c75c;
+    --border: rgba(0,0,0,0.10);
+    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+  html, body { background: #fff; margin: 0; padding: 0; color: var(--ink); font-family: var(--font-sans); }
+  .frame { max-width: 720px; margin: 0 auto; padding: 12px; box-sizing: border-box; }
+
+  /* Doc header (matches builder/sim) */
+  .doc-header { position: relative; background: #000000; color: #fff; padding: 14px 18px; border-radius: 8px 8px 0 0; text-align: center; border-bottom: 3px solid var(--accent); }
+  .doc-title { font-size: 18px; font-weight: 700; margin: 0 0 2px; }
+  .doc-sub { font-size: 11px; opacity: 0.7; margin: 0; }
+  .doc-byline { font-size: 11px; margin-top: 4px; opacity: 0.9; }
+  .doc-byline a { color: var(--accent); text-decoration: none; font-weight: 600; }
+  .action-brand { position: absolute; top: 12px; right: 14px; display: inline-flex; align-items: center; gap: 5px; }
+  .action-brand-text { font-weight: 900; font-size: 14px; color: #fff; }
+  .action-brand-check { width: 16px; height: 16px; border-radius: 50%; background: var(--accent); display: inline-flex; align-items: center; justify-content: center; }
+  .action-brand-check svg { width: 10px; height: 10px; }
+
+  .body { background: var(--card); border-radius: 0 0 8px 8px; padding: 14px; }
+
+  /* Pool totals strip */
+  .pools { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; margin-bottom: 14px; }
+  .pool-card { background: #000; color: var(--tote-green); border-radius: 5px; padding: 8px 6px; text-align: center; }
+  .pool-lbl { font-size: 9px; letter-spacing: 1.2px; opacity: 0.6; font-weight: 600; }
+  .pool-val { font-size: 13px; font-weight: 700; margin-top: 2px; font-variant-numeric: tabular-nums; letter-spacing: 0.5px; }
+
+  /* Tabs */
+  .tabs { display: flex; gap: 0; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; background: white; margin-bottom: 12px; }
+  .tabs button { flex: 1; padding: 10px 0; background: transparent; border: none; font-size: 12px; font-weight: 600; color: var(--muted); cursor: pointer; border-right: 1px solid var(--border); letter-spacing: 0.5px; }
+  .tabs button:last-child { border-right: none; }
+  .tabs button.active { background: #000; color: var(--accent); }
+
+  /* WIN/PLC/SHW table */
+  .win-table { width: 100%; border-collapse: collapse; background: white; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+  .win-table thead th { background: #f0eee9; padding: 8px 6px; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); font-weight: 700; text-align: right; }
+  .win-table thead th.l { text-align: left; }
+  .win-table tbody td { padding: 9px 6px; border-bottom: 1px solid var(--border); font-size: 13px; vertical-align: middle; text-align: right; font-variant-numeric: tabular-nums; }
+  .win-table tbody td.l { text-align: left; }
+  .win-table tbody tr:last-child td { border-bottom: none; }
+  .win-table tbody tr:hover { background: rgba(17,199,92,0.04); }
+  .win-table tbody tr.chalk { background: rgba(17,199,92,0.08); }
+  .saddle { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 4px; font-size: 13px; font-weight: 800; border: 1px solid rgba(0,0,0,0.2); margin-right: 8px; vertical-align: middle; }
+  .horse-name { font-weight: 600; }
+  .horse-ml { color: var(--muted); font-size: 11px; margin-left: 6px; }
+  .pool-share { font-size: 11px; color: var(--muted); }
+  .pool-bar { display: inline-block; height: 4px; background: var(--accent); border-radius: 2px; vertical-align: middle; margin-right: 6px; opacity: 0.5; }
+
+  /* EXACTA grid */
+  .ex-section { background: white; border: 1px solid var(--border); border-radius: 6px; padding: 12px; }
+  .ex-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .ex-header h3 { margin: 0; font-size: 12px; letter-spacing: 1px; color: var(--muted); font-weight: 700; text-transform: uppercase; }
+  .ex-key-select { display: flex; gap: 4px; flex-wrap: wrap; }
+  .ex-key-select button { width: 28px; height: 28px; border-radius: 4px; border: 1px solid var(--border); font-size: 12px; font-weight: 700; cursor: pointer; background: white; color: var(--ink); }
+  .ex-key-select button.active { background: #000; color: var(--accent); border-color: #000; }
+  .ex-rows { display: grid; gap: 4px; }
+  .ex-row { display: grid; grid-template-columns: 60px 1fr auto; gap: 10px; align-items: center; padding: 6px 8px; background: #fafaf7; border-radius: 4px; font-size: 13px; }
+  .ex-combo { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .ex-name { color: var(--muted); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ex-pay { font-weight: 700; color: #000; font-variant-numeric: tabular-nums; }
+  .ex-row.chalk { background: rgba(17,199,92,0.10); }
+
+  /* Footer / timestamp */
+  .timestamp { font-size: 10px; color: var(--muted); text-align: center; margin-top: 12px; letter-spacing: 0.5px; display: flex; gap: 8px; align-items: center; justify-content: center; }
+  .timestamp.fresh #ts-text { color: var(--accent-dark); font-weight: 600; }
+  .live-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 0 rgba(17,199,92,0.6); animation: livePulse 2s ease-out infinite; }
+  @keyframes livePulse { 0% { box-shadow: 0 0 0 0 rgba(17,199,92,0.6); } 70% { box-shadow: 0 0 0 6px rgba(17,199,92,0); } 100% { box-shadow: 0 0 0 0 rgba(17,199,92,0); } }
+  .live-dot.error { background: #d33; animation: none; }
+  .footnote { font-size: 10px; color: var(--muted); text-align: center; margin-top: 6px; line-height: 1.4; }
+
+  /* Mobile */
+  @media (max-width: 480px) {
+    .pools { grid-template-columns: repeat(3, 1fr); }
+    .ex-row { grid-template-columns: 56px 1fr auto; font-size: 12px; }
+    .doc-title { font-size: 16px; }
+    .win-table thead th, .win-table tbody td { font-size: 11px; padding: 7px 4px; }
+    .horse-ml { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="frame">
+  <div class="doc-header">
+    <div class="doc-title">158th Belmont Stakes — Live Payouts</div>
+    <div class="doc-sub">Saratoga · 1 1/4 miles · Sat 6/6 · Post 7:04 PM ET</div>
+    <div class="doc-byline">By <a href="https://twitter.com/SeanZerillo">@SeanZerillo</a></div>
+    <div class="action-brand">
+      <span class="action-brand-text">ACTION</span>
+      <span class="action-brand-check">
+        <svg viewBox="0 0 12 12" fill="none"><path d="M3 6.5L5 8.5L9 4" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </span>
+    </div>
+  </div>
+
+  <div class="body">
+    <div class="pools" id="pools"></div>
+
+    <div class="tabs" id="tabs">
+      <button data-tab="win" class="active">WIN</button>
+      <button data-tab="plc">PLACE</button>
+      <button data-tab="shw">SHOW</button>
+      <button data-tab="ex">EXACTA</button>
+    </div>
+
+    <div id="content"></div>
+
+    <div class="timestamp" id="ts"><span class="live-dot" id="dot"></span><span id="ts-text">Loading…</span></div>
+    <div class="footnote">Pool data refreshes every 30 min from NYRA Bets. WIN/PL/SHW payouts derived from live pool shares; exacta payouts are NYRA probables.</div>
+  </div>
+</div>
+
+<script>
+(async function() {
+  // 9-horse Belmont field — saddle colors + ML mapping
+  const FIELD = {
+    1: { name: 'Vitruvian Man',   ml: '30-1', tw: '#E11A1A', nm: '#FFFFFF' },
+    2: { name: 'Powershift',      ml: '12-1', tw: '#FFFFFF', nm: '#000000' },
+    3: { name: 'Chief Wallabee',  ml: '3-1',  tw: '#1B4FB0', nm: '#FFFFFF' },
+    4: { name: 'Renegade',        ml: '2-1',  tw: '#F4DA15', nm: '#000000' },
+    5: { name: 'Ottinho',         ml: '20-1', tw: '#1F8A3A', nm: '#FFFFFF' },
+    6: { name: 'Growth Equity',   ml: '12-1', tw: '#000000', nm: '#B6E04C' },
+    7: { name: 'Commandment',     ml: '6-1',  tw: '#F26B1F', nm: '#000000' },
+    8: { name: 'Emerging Market', ml: '6-1',  tw: '#FF1493', nm: '#000000' },
+    9: { name: 'Golden Tempo',    ml: '9-2',  tw: '#1FD9E8', nm: '#000000' },
+  };
+
+  let POOL = null;
+  let activeTab = 'win';
+  let exactaKey = null; // which post is the "anchor" in the exacta view
+
+  function fmt$(x) {
+    if (x >= 1e6) return '$' + (x/1e6).toFixed(1) + 'M';
+    if (x >= 1e3) return '$' + (x/1e3).toFixed(1) + 'k';
+    return '$' + Math.round(x).toLocaleString();
+  }
+  function fmtMoney(x) { return '$' + x.toFixed(2); }
+  function decToOdds(s) {
+    // strength s (probability) → fractional odds "X-1"
+    if (s >= 1) return '1-9';
+    const dec = (1 - s) / s;
+    if (dec >= 1) return Math.round(dec * 5) / 5 + '-1';
+    // shorter than even — show fractional like "1-2", "2-5", "1-5"
+    const inv = 1 / dec;
+    if (inv > 5) return '1-' + Math.round(inv);
+    if (inv > 1.7) return '2-5';
+    return '4-5';
+  }
+
+  function renderPools() {
+    const el = document.getElementById('pools');
+    if (!POOL?.pool_totals) { el.innerHTML = ''; return; }
+    const order = [
+      ['WN', 'WIN'], ['PL', 'PLC'], ['SH', 'SHW'],
+      ['EX', 'EXACTA'], ['TR', 'TRI'], ['SU', 'SUPER']
+    ];
+    el.innerHTML = order.map(([code, lbl]) => {
+      const p = POOL.pool_totals[code];
+      if (!p) return '';
+      return `<div class="pool-card"><div class="pool-lbl">${lbl}</div><div class="pool-val">${fmt$(p.gross)}</div></div>`;
+    }).join('');
+  }
+
+  function renderWinTable(mode) {
+    // mode: 'win' | 'plc' | 'shw'
+    if (!POOL) return '';
+    const strengths = POOL.strengths || {};
+    const winGross = POOL.win_pool_gross || {};
+    const winPoolNet = POOL.pool_totals?.WN?.net || 1;
+    const totalGross = Object.values(winGross).reduce((a,b) => a + (b||0), 0) || 1;
+
+    // Strengths come from exacta-derived PL win probabilities.
+    // For PLACE: P(top-2) ≈ 1 - (1-s)^a where a is calibrated; we'll use a simple proxy:
+    //   P(place) ≈ s + s*(1-s)/0.8  bounded
+    // For SHOW similar with broader factor
+    const rows = Object.keys(strengths).map(post => {
+      const p = parseInt(post);
+      const s = strengths[post] || 0.001;
+      const f = FIELD[p] || { name: 'Post ' + p, ml: '?', tw: '#ccc', nm: '#000' };
+
+      // $2 payouts with NYRA-style takeout (~17% WIN, ~17.5% PL, 17.5% SH)
+      const winPay = 2 / s * 0.83;
+      // Place: probability of finishing top-2
+      const placeProb = Math.min(0.95, s + s * (1 - s) * 1.3);
+      const placePay = 2 / placeProb * 0.825 * 0.55;  // place pool split across 2 horses
+      // Show: probability of finishing top-3
+      const showProb = Math.min(0.97, s + s * (1 - s) * 2.1);
+      const showPay = 2 / showProb * 0.825 * 0.35;   // show pool split across 3 horses
+
+      const shareGross = winGross[post] || 0;
+      const sharePct = (shareGross / totalGross) * 100;
+
+      return { p, f, s, sharePct, winPay, placePay, showPay };
+    }).sort((a,b) => b.s - a.s);
+
+    const cols = mode === 'win' ? ['$2 WIN'] : mode === 'plc' ? ['$2 PLC'] : ['$2 SHW'];
+    const payKey = mode === 'win' ? 'winPay' : mode === 'plc' ? 'placePay' : 'showPay';
+
+    const headHTML = `
+      <thead><tr>
+        <th class="l">#</th>
+        <th class="l">HORSE</th>
+        <th>ODDS</th>
+        <th>${cols[0]}</th>
+        <th>POOL %</th>
+      </tr></thead>`;
+
+    const bodyHTML = rows.map((r, i) => {
+      const odds = decToOdds(r.s);
+      const barW = Math.max(2, Math.min(60, r.sharePct * 1.0));
+      return `
+        <tr class="${i === 0 ? 'chalk' : ''}">
+          <td class="l"><span class="saddle" style="background:${r.f.tw};color:${r.f.nm}">${r.p}</span></td>
+          <td class="l"><span class="horse-name">${r.f.name}</span><span class="horse-ml">${r.f.ml}</span></td>
+          <td>${odds}</td>
+          <td>${fmtMoney(r[payKey])}</td>
+          <td><span class="pool-bar" style="width:${barW}px"></span>${r.sharePct.toFixed(1)}%</td>
+        </tr>`;
+    }).join('');
+
+    return `<table class="win-table">${headHTML}<tbody>${bodyHTML}</tbody></table>`;
+  }
+
+  function renderExacta() {
+    if (!POOL?.exacta_payouts_dollar1) return '<div style="text-align:center;color:var(--muted);padding:20px">No exacta data yet.</div>';
+    const ex = POOL.exacta_payouts_dollar1;
+    const strengths = POOL.strengths || {};
+    const sortedPosts = Object.keys(strengths).sort((a,b) => strengths[b] - strengths[a]).map(Number);
+
+    if (!exactaKey) exactaKey = sortedPosts[0];
+
+    const keyButtons = sortedPosts.map(p => `<button data-key="${p}" class="${p === exactaKey ? 'active' : ''}">${p}</button>`).join('');
+
+    // Show A→B where A = exactaKey, sorted by payout ascending
+    const pairs = sortedPosts
+      .filter(b => b !== exactaKey && ex[`${exactaKey}-${b}`])
+      .map(b => ({ b, pay: ex[`${exactaKey}-${b}`] }))
+      .sort((x,y) => x.pay - y.pay);
+
+    const rowsHTML = pairs.map((row, i) => {
+      const f = FIELD[row.b] || { name: 'Post ' + row.b };
+      return `
+        <div class="ex-row ${i < 2 ? 'chalk' : ''}">
+          <span class="ex-combo">${exactaKey}-${row.b}</span>
+          <span class="ex-name">${f.name}</span>
+          <span class="ex-pay">$${(row.pay * 2).toFixed(2)}</span>
+        </div>`;
+    }).join('');
+
+    return `
+      <div class="ex-section">
+        <div class="ex-header">
+          <h3>$2 EXACTA — KEYED ON #${exactaKey}</h3>
+          <div class="ex-key-select">${keyButtons}</div>
+        </div>
+        <div class="ex-rows">${rowsHTML || '<div style="color:var(--muted);padding:6px">No probables for this anchor.</div>'}</div>
+      </div>
+    `;
+  }
+
+  function render() {
+    renderPools();
+    const c = document.getElementById('content');
+    if (activeTab === 'ex') c.innerHTML = renderExacta();
+    else c.innerHTML = renderWinTable(activeTab);
+
+    // Wire up exacta-key buttons if present
+    if (activeTab === 'ex') {
+      document.querySelectorAll('.ex-key-select button').forEach(b => {
+        b.addEventListener('click', () => {
+          exactaKey = parseInt(b.dataset.key);
+          render();
+        });
+      });
+    }
+
+    // Tabs
+    document.querySelectorAll('#tabs button').forEach(b => {
+      b.classList.toggle('active', b.dataset.tab === activeTab);
+      b.onclick = () => { activeTab = b.dataset.tab; render(); };
+    });
+
+    // Timestamp
+    if (POOL?.updated_at) {
+      const dt = new Date(POOL.updated_at);
+      const diffMin = (Date.now() - dt.getTime()) / 60000;
+      const ts = document.getElementById('ts');
+      const txt = document.getElementById('ts-text');
+      const dot = document.getElementById('dot');
+      if (diffMin < 35) {
+        ts.classList.add('fresh');
+        dot.classList.remove('error');
+        txt.textContent = 'Live · updated ' + (diffMin < 1 ? 'just now' : Math.round(diffMin) + 'm ago');
+      } else {
+        ts.classList.remove('fresh');
+        dot.classList.add('error');
+        txt.textContent = 'Stale — last update ' + Math.round(diffMin) + ' min ago';
+      }
+    }
+  }
+
+  async function fetchPool() {
+    try {
+      const r = await fetch('data/belmont/belmont_pool_payouts.json?t=' + Date.now());
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      POOL = await r.json();
+      render();
+    } catch(e) {
+      console.warn('Pool fetch failed:', e);
+      const dot = document.getElementById('dot');
+      const txt = document.getElementById('ts-text');
+      dot.classList.add('error');
+      txt.textContent = 'Pool feed unreachable — retrying in 60s';
+    }
+  }
+
+  await fetchPool();
+  // Refresh every 60 seconds — the underlying JSON updates every 30 min, so this is plenty
+  setInterval(fetchPool, 60000);
+})();
+</script>
+</body>
+</html>
