@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- belmont_sim.html v1.1 - Action Network black/green palette -->
+<!-- belmont_sim.html v1.2 - Live NYRA pool feed for exotic payouts -->
 <html lang="en">
 <head>
 <meta charset="utf-8" />
@@ -242,7 +242,7 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light;
   // --- v3.2: Real database of 10,000 sims (Option A) ---
   let SIMS_DATA = null;
   let currentSimIdx = null;
-  fetch('data/belmont/belmont_sims.json?v=v7').then(r => r.json()).then(d => {
+  fetch('data/belmont/belmont_sims.json?v=v8').then(r => r.json()).then(d => {
     SIMS_DATA = d;
     document.getElementById('dt-play').disabled = false;
     const counterEl = document.getElementById('sim-counter');
@@ -977,12 +977,12 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light;
   // Action that scrapes NYRA Bets) and uses the live exacta matrix + Plackett-Luce
   // strengths for $2 EX (direct lookup), $1 TRI (PL extension), $1 SUPER (PL extension).
   // The bundled values below are the fallback if the fetch fails or the JSON is stale.
-  let POOL_DATA = {"strengths":{"12":0.2371,"2":0.1998,"1":0.1124,"9":0.0902,"5":0.0849,"10":0.0767,"6":0.0725,"14":0.0489,"7":0.0306,"11":0.0175,"4":0.0105,"13":0.0104,"3":0.0056,"8":0.0029},"ex_factor":0.78,"tri_factor":0.65,"super_factor":0.55};
-  let POOL_EXACTA = {"1-2":30.83,"1-3":1099.91,"1-4":586.62,"1-5":72.55,"1-6":84.96,"1-7":201.29,"1-8":2123.97,"1-9":68.29,"1-10":80.31,"1-11":351.97,"1-12":25.98,"1-13":592.26,"1-14":125.96,"2-1":27.79,"2-3":557.84,"2-4":297.51,"2-5":36.8,"2-6":43.09,"2-7":102.09,"2-8":1077.21,"2-9":34.63,"2-10":40.73,"2-11":178.51,"2-12":13.18,"2-13":300.38,"2-14":63.88,"3-1":1232.26,"3-2":693.22,"3-4":13191.02,"3-5":1631.4,"3-6":1910.42,"3-7":4526.33,"3-8":47760.59,"3-9":1535.54,"3-10":1805.81,"3-11":7914.61,"3-12":584.17,"3-13":13317.86,"3-14":2832.43,"4-1":653.97,"4-2":367.9,"4-3":13126.02,"4-5":865.79,"4-6":1013.87,"4-7":2402.15,"4-8":25346.8,"4-9":814.92,"4-10":958.35,"4-11":4200.33,"4-12":310.02,"4-13":7067.86,"4-14":1503.18,"5-1":74.8,"5-2":42.08,"5-3":1501.3,"5-4":800.69,"5-6":115.96,"5-7":274.75,"5-8":2899.06,"5-9":93.21,"5-10":109.61,"5-11":480.42,"5-12":35.46,"5-13":808.39,"5-14":171.93,"6-1":88.78,"6-2":49.94,"6-3":1781.9,"6-4":950.34,"6-5":117.53,"6-7":326.1,"6-8":3440.9,"6-9":110.63,"6-10":130.1,"6-11":570.21,"6-12":42.09,"6-13":959.48,"6-14":204.06,"7-1":219.84,"7-2":123.67,"7-3":4412.54,"7-4":2353.35,"7-5":291.05,"7-6":340.83,"7-8":8520.76,"7-9":273.95,"7-10":322.17,"7-11":1412.01,"7-12":104.22,"7-13":2375.98,"7-14":505.32,"8-1":2385.99,"8-2":1342.27,"8-3":47890.27,"8-4":25541.48,"8-5":3158.84,"8-6":3699.11,"8-7":8764.23,"8-9":2973.23,"8-10":3496.55,"8-11":15324.89,"8-12":1131.11,"8-13":25787.07,"8-14":5484.37,"9-1":70.0,"9-2":39.38,"9-3":1404.9,"9-4":749.28,"9-5":92.67,"9-6":108.52,"9-7":257.11,"9-8":2712.91,"9-10":102.57,"9-11":449.57,"9-12":33.18,"9-13":756.49,"9-14":160.89,"10-1":83.54,"10-2":46.99,"10-3":1676.69,"10-4":894.24,"10-5":110.59,"10-6":129.51,"10-7":306.85,"10-8":3237.76,"10-9":104.1,"10-11":536.54,"10-12":39.6,"10-13":902.84,"10-14":192.01,"11-1":389.6,"11-2":219.18,"11-3":7819.9,"11-4":4170.61,"11-5":515.8,"11-6":604.02,"11-7":1431.09,"11-8":15100.49,"11-9":485.49,"11-10":570.94,"11-12":184.7,"11-13":4210.71,"11-14":895.53,"12-1":22.33,"12-2":12.56,"12-3":448.17,"12-4":239.02,"12-5":29.56,"12-6":34.62,"12-7":82.02,"12-8":865.43,"12-9":27.82,"12-10":32.72,"12-11":143.41,"12-13":241.32,"12-14":51.32,"13-1":660.32,"13-2":371.47,"13-3":13253.57,"13-4":7068.57,"13-5":874.2,"13-6":1023.72,"13-7":2425.49,"13-8":25593.1,"13-9":822.84,"13-10":967.67,"13-11":4241.14,"13-12":313.03,"13-14":1517.79,"14-1":134.97,"14-2":75.93,"14-3":2709.09,"14-4":1444.85,"14-5":178.69,"14-6":209.25,"14-7":495.78,"14-8":5231.35,"14-9":168.19,"14-10":197.8,"14-11":866.91,"14-12":63.99,"14-13":1458.74};
+  let POOL_DATA = {"strengths":{"1":0.0289,"2":0.0711,"3":0.1476,"4":0.3231,"5":0.0282,"6":0.0457,"7":0.1092,"8":0.1211,"9":0.125},"ex_factor":0.8173,"tri_factor":0.78,"super_factor":0.75};
+  let POOL_EXACTA = {"1-2":131.63,"1-3":303.89,"1-4":110.88,"1-5":210.38,"1-6":410.25,"1-7":319.68,"1-8":439.56,"1-9":332.64,"2-1":137.51,"2-3":110.38,"2-4":25.4,"2-5":276.57,"2-6":180.99,"2-7":157.79,"2-8":150.09,"2-9":106.1,"3-1":328.2,"3-2":96.53,"3-4":14.18,"3-5":264.68,"3-6":123.07,"3-7":36.9,"3-8":34.14,"3-9":34.57,"4-1":49.72,"4-2":19.99,"4-3":12.22,"4-5":115.56,"4-6":55.69,"4-7":15.77,"4-8":14.52,"4-9":11.67,"5-1":203.43,"5-2":337.19,"5-3":264.68,"5-4":149.18,"5-6":311.58,"5-7":256.41,"5-8":238.98,"5-9":200.12,"6-1":378.69,"6-2":170.94,"6-3":155.79,"6-4":69.93,"6-5":289.59,"6-7":126.23,"6-8":111.88,"6-9":152.89,"7-1":273.5,"7-2":127.54,"7-3":36.73,"7-4":21.22,"7-5":217.83,"7-6":118.91,"7-8":51.17,"7-9":63.93,"8-1":328.2,"8-2":130.24,"8-3":34.66,"8-4":18.36,"8-5":208.6,"8-6":106.1,"8-7":53.05,"8-9":46.53,"9-1":289.59,"9-2":101.29,"9-3":37.29,"9-4":13.98,"9-5":163.01,"9-6":142.28,"9-7":64.6,"9-8":76.2};
   // Fetch latest pool payouts on load. If successful, replaces the bundled fallback.
   // The JSON file is refreshed by a GitHub Action that scrapes NYRA Bets every ~5 min.
   let POOL_LIVE_AT = null;
-  fetch('data/preakness_pool.json?t=' + Date.now())
+  fetch('data/belmont/belmont_pool_payouts.json?t=' + Date.now())
     .then(r => r.ok ? r.json() : null)
     .then(d => {
       if (d && d.strengths && d.exacta_payouts_dollar1) {
@@ -1039,11 +1039,14 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light;
     const sPlace   = smd * 0.85 + 1.0;
     const sShow    = smd * 0.40 + 1.5;
     const tShow    = tmd * 0.40 + 1.5;
-    // ML-derived exotic payouts (no live pool feed for Belmont 2026)
-    // $2 EXACTA, $1 TRIFECTA, $1 SUPERFECTA — calibrated to historical Belmont averages 2000-2020
-    const exacta     = wmd * smd * 2.2;
-    const trifecta   = wmd * smd * tmd * 2.5;
-    const superfecta = wmd * smd * tmd * fmd * 1.0;
+    // Live-pool-anchored exotic payouts (NYRA Bets, refreshed every ~5 min by a GitHub Action).
+    // For each exotic, try the pool first; fall back to ML-derived if the pool can't price the combo.
+    const ex1Live  = poolExacta1(w.post, s.post);
+    const tri1Live = poolTrifecta1(w.post, s.post, t.post);
+    const sup1Live = poolSuperfecta1(w.post, s.post, t.post, f.post);
+    const exacta     = ex1Live  != null ? ex1Live * 2  : wmd * smd * 2.2;
+    const trifecta   = tri1Live != null ? tri1Live      : wmd * smd * tmd * 2.5;
+    const superfecta = sup1Live != null ? sup1Live      : wmd * smd * tmd * fmd * 1.0;
     const finalTime = `2:0${Math.floor(Math.random()*4)}.${(Math.floor(Math.random()*100)).toString().padStart(2,'0')}`;
     const silk = h => `<span class="tb-silk" data-post="${h.post}" style="background:${h.tw};color:${h.nm};">${h.post}</span>`;
     const restSilk = h => `<span class="tb-rest-silk" data-post="${h.post}" style="background:${h.tw};color:${h.nm};">${h.post}</span>`;
