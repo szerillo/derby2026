@@ -132,7 +132,7 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light;
 .tip-row { display: flex; justify-content: space-between; gap: 12px; padding: 1.5px 0; color: rgba(17,199,92,0.85); font-variant-numeric: tabular-nums; }
 .tip-lbl { color: rgba(17,199,92,0.55); font-size: 10px; }
 
-.tb { background: transparent; color: #1a1a1a; padding: 16px 22px; border-radius: 6px; border: none; font-family: 'Helvetica Neue', Arial, sans-serif; }
+.tb { background: #ffffff; color: #1a1a1a; padding: 16px 22px; border-radius: 6px; border: 1px solid rgba(0,0,0,0.08); box-shadow: 0 2px 6px rgba(0,0,0,0.05); font-family: 'Helvetica Neue', Arial, sans-serif; }
 .tb-title { font-size: 17px; font-weight: 700; text-align: center; letter-spacing: 2px; color: #000000; margin-bottom: 4px; }
 .tb-sub { font-size: 11px; text-align: center; color: #6b6b6b; letter-spacing: 1.5px; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 0.5px solid rgba(0,0,0,0.12); }
 .tb-tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
@@ -242,7 +242,7 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light;
   // --- v3.2: Real database of 10,000 sims (Option A) ---
   let SIMS_DATA = null;
   let currentSimIdx = null;
-  fetch('data/belmont/belmont_sims.json?v=v9').then(r => r.json()).then(d => {
+  fetch('data/belmont/belmont_sims.json?v=v10').then(r => r.json()).then(d => {
     SIMS_DATA = d;
     document.getElementById('dt-play').disabled = false;
     const counterEl = document.getElementById('sim-counter');
@@ -382,24 +382,23 @@ html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light;
     // 7) Animation path (invisible)
     svg += `<path id="anim-path" d="${animPath()}" fill="none" stroke="none"/>`;
 
-    // === Belmont Stakes 2026 infield logo panel ===
+    // === Belmont Stakes 2026 infield logo panel — centered at (cx, cy) so winner-flash overlays it ===
     const logoW = 280, logoH = 110;
-    const logoX = cx - logoW/2, logoY = cy - logoH/2 - 10;
+    const logoX = cx - logoW/2, logoY = cy - logoH/2;
     svg += `<g>`;
     svg += `<rect x="${logoX}" y="${logoY}" width="${logoW}" height="${logoH}" rx="7" fill="#000000" stroke="#11c75c" stroke-width="2" opacity="0.97"/>`;
-    svg += `<text x="${cx}" y="${cy - 30}" text-anchor="middle" font-size="18" font-family="Georgia, serif" letter-spacing="3" font-weight="700" fill="#ffffff">BELMONT</text>`;
-    svg += `<text x="${cx}" y="${cy - 9}" text-anchor="middle" font-size="18" font-family="Georgia, serif" letter-spacing="3" font-weight="700" fill="#ffffff">STAKES</text>`;
+    svg += `<text x="${cx}" y="${cy - 20}" text-anchor="middle" font-size="18" font-family="Georgia, serif" letter-spacing="3" font-weight="700" fill="#ffffff">BELMONT</text>`;
+    svg += `<text x="${cx}" y="${cy + 1}" text-anchor="middle" font-size="18" font-family="Georgia, serif" letter-spacing="3" font-weight="700" fill="#ffffff">STAKES</text>`;
     // Saratoga banner
-    svg += `<rect x="${cx - 62}" y="${cy + 2}" width="124" height="20" rx="3" fill="#11c75c"/>`;
-    svg += `<text x="${cx}" y="${cy + 16}" text-anchor="middle" font-size="12" font-family="Georgia, serif" letter-spacing="3.5" font-weight="700" fill="#000000">SARATOGA</text>`;
-    // Year tags
+    svg += `<rect x="${cx - 62}" y="${cy + 12}" width="124" height="20" rx="3" fill="#11c75c"/>`;
+    svg += `<text x="${cx}" y="${cy + 26}" text-anchor="middle" font-size="12" font-family="Georgia, serif" letter-spacing="3.5" font-weight="700" fill="#000000">SARATOGA</text>`;
     // Year tags flanking the SARATOGA banner
-    svg += `<text x="${cx - 85}" y="${cy + 16}" text-anchor="middle" font-size="13" font-family="Georgia, serif" letter-spacing="1" font-weight="700" fill="#11c75c">20</text>`;
-    svg += `<text x="${cx + 85}" y="${cy + 16}" text-anchor="middle" font-size="13" font-family="Georgia, serif" letter-spacing="1" font-weight="700" fill="#11c75c">26</text>`;
+    svg += `<text x="${cx - 85}" y="${cy + 26}" text-anchor="middle" font-size="13" font-family="Georgia, serif" letter-spacing="1" font-weight="700" fill="#11c75c">20</text>`;
+    svg += `<text x="${cx + 85}" y="${cy + 26}" text-anchor="middle" font-size="13" font-family="Georgia, serif" letter-spacing="1" font-weight="700" fill="#11c75c">26</text>`;
     svg += `</g>`;
 
     // Distance label below the logo
-    svg += `<text x="${cx}" y="${cy + 42}" text-anchor="middle" font-size="11" fill="#11c75c" font-family="-apple-system, sans-serif" letter-spacing="3" font-weight="700">1 1/4 MILES · 158TH RUNNING</text>`;
+    svg += `<text x="${cx}" y="${cy + 70}" text-anchor="middle" font-size="11" fill="#11c75c" font-family="-apple-system, sans-serif" letter-spacing="3" font-weight="700">1 1/4 MILES · 158TH RUNNING</text>`;
 
     svg += `</svg>`;
     const overlays = `
