@@ -12,7 +12,7 @@ permissions:
 jobs:
   scrape:
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 4
     steps:
       - uses: actions/checkout@v4
 
@@ -20,21 +20,29 @@ jobs:
         with:
           node-version: 20
 
-      - name: Scrape probables
+      - name: Scrape Derby probables
         run: node scripts/scrape_pool.js
+        continue-on-error: true
+
+      - name: Scrape Belmont Stakes probables
+        run: node scripts/scrape_belmont_pool.js
+        continue-on-error: true
 
       - name: Commit refreshed payouts
         run: |
           git config user.email "actions@users.noreply.github.com"
           git config user.name "nyra-pool-bot"
-          # Always commit on a successful scrape — the JSON now includes pool_totals which
-          # reliably grows every run (bets coming in), so the file is genuinely fresh even
-          # when NYRA's per-combo probables haven't refreshed yet.
-          if git diff --quiet -- data/derby_pool_payouts.json; then
-            echo "No diff (script may have failed silently). Skipping."
+          changed=0
+          for f in data/derby_pool_payouts.json data/belmont/belmont_pool_payouts.json; do
+            if [ -f "$f" ] && ! git diff --quiet -- "$f"; then
+              git add "$f"
+              changed=1
+            fi
+          done
+          if [ "$changed" -eq 0 ]; then
+            echo "No diff in any pool file. Skipping."
             exit 0
           fi
-          git add data/derby_pool_payouts.json
           git commit -m "Auto-update pool payouts ($(date -u +%H:%M)Z)"
           git push
           echo "Pushed."
