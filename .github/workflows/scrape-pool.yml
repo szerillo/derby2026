@@ -2,9 +2,10 @@ name: Scrape NYRA Bets pool
 
 on:
   schedule:
-    # Every 30 minutes — appropriate cadence pre-race day.
-    # Bump back to */5 close to Belmont post time Saturday if you want sharper tracking.
-    - cron: '*/30 * * * *'
+    # Belmont Stakes weekend — every 10 min to keep the data warm
+    # (free-tier cron throttles under low activity; tighter cadence reduces gaps).
+    # Bump down to */30 after the weekend if scrape minutes become a concern.
+    - cron: '*/10 * * * *'
   workflow_dispatch:
 
 permissions:
